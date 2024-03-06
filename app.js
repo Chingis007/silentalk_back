@@ -9,12 +9,13 @@ const passport = require("passport")
 const { OAuth2Client } = require("google-auth-library")
 const app = express()
 app.use(
-  cors({
-    // origin: "*", змінив коли кукіси не сетались в браузері
-    origin: "*",
-    // origin: true,
-    credentials: true,
-  })
+  cors()
+  // {
+  // origin: "*", змінив коли кукіси не сетались в браузері
+  // origin: "*",
+  // origin: true,
+  // credentials: true,
+  // }
 )
 app.use(cookieParser("someSecret"))
 // app.use(cookieParser())
