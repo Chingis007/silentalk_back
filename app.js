@@ -11,7 +11,8 @@ const app = express()
 app.use(
   cors({
     // origin: "*", змінив коли кукіси не сетались в браузері
-    origin: true,
+    origin: "*",
+    // origin: true,
     credentials: true,
   })
 )
