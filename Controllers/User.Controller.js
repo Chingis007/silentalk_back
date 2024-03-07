@@ -94,6 +94,9 @@ module.exports = {
       return res.status(403).json({ error: "Something else wrong" })
     }
   },
+  doSilly: async (req, res, next) => {
+    res.send("Silly things are working")
+  },
   findGoogleUserByEmail: async (req, res, next) => {
     const email = req.main_payload.email
     const password = req.main_payload.password
