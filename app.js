@@ -8,7 +8,6 @@ const MemoryStore = require("memorystore")(expressSession)
 const passport = require("passport")
 const { OAuth2Client } = require("google-auth-library")
 const app = express()
-app.options("*", cors())
 app.use(
   cors()
   // {
