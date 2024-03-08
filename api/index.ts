@@ -11,7 +11,7 @@ const app = express()
 
 // "builds": [{ "src": "/index.js", "use": "@vercel/node" }],
 
-app.get("/", (req, res) => {
+app.get("/", (req: any, res: any) => {
   res.send("Express on Vercel")
 })
 app.use(
@@ -87,7 +87,7 @@ app.use(passport.session())
 // })
 
 //Error handler
-app.use((err, req, res, next) => {
+app.use((err: any, req: any, res: any, next: any) => {
   res.status(err.status || 500)
   res.send({
     error: {
