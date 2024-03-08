@@ -1,12 +1,13 @@
-const express = require("express")
+import express from "express"
+import cors from "cors"
+import cookieParser from "cookie-parser"
+import expressSession from "express-session"
+import passport from "passport"
+import { OAuth2Client } from "google-auth-library"
+
 const createError = require("http-errors")
 const dotenv = require("dotenv").config()
-const cors = require("cors")
-const cookieParser = require("cookie-parser")
-const expressSession = require("express-session")
 const MemoryStore = require("memorystore")(expressSession)
-const passport = require("passport")
-const { OAuth2Client } = require("google-auth-library")
 const app = express()
 
 // "builds": [{ "src": "/index.js", "use": "@vercel/node" }],
@@ -34,7 +35,7 @@ app.use(
     resave: true,
     saveUninitialized: true,
     // setting the max age to longer duration
-    maxAge: 24 * 60 * 60 * 1000,
+    // maxAge: 24 * 60 * 60 * 1000,
     store: new MemoryStore(),
   })
 )
