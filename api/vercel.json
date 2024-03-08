@@ -1,8 +1,9 @@
 {
   "version": 2,
+  "builds": [{ "src": "api/index.js" }],
   "headers": [
     {
-      "source": "app/index.js",
+      "source": "api/index.js",
       "headers": [
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
         { "key": "Access-Control-Allow-Origin", "value": "*" },
