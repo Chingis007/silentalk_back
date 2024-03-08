@@ -8,6 +8,9 @@ const MemoryStore = require("memorystore")(expressSession)
 const passport = require("passport")
 const { OAuth2Client } = require("google-auth-library")
 const app = express()
+app.get("/", (req, res) => {
+  res.send("Express on Vercel")
+})
 app.use(
   cors()
   // {
