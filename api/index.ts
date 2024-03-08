@@ -6,7 +6,6 @@ const { OAuth2Client } = require("google-auth-library")
 const cors = require("cors")
 const dotenv = require("dotenv").config()
 const MemoryStore = require("memorystore")(expressSession)
-export const fetchCache = "force-no-store"
 
 const app = express()
 
