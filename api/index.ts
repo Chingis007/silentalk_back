@@ -8,6 +8,9 @@ const MemoryStore = require("memorystore")(expressSession)
 const passport = require("passport")
 const { OAuth2Client } = require("google-auth-library")
 const app = express()
+
+// "builds": [{ "src": "/index.js", "use": "@vercel/node" }],
+
 app.get("/", (req, res) => {
   res.send("Express on Vercel")
 })
@@ -62,25 +65,26 @@ app.use(passport.session())
 //   // You can use the above code if your not using the http-errors module
 //   next(createError(404, "Not found"))
 // })
-app.use((req, res, next) => {
-  const origin = req.get("referer")
-  const isWhitelisted = whitelist.find((w) => origin && origin.includes(w))
-  if (isWhitelisted) {
-    res.setHeader("Access-Control-Allow-Origin", "*")
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-    )
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "X-Requested-With,Content-Type,Authorization"
-    )
-    res.setHeader("Access-Control-Allow-Credentials", true)
-  }
-  // Pass to next layer of middleware
-  if (req.method === "OPTIONS") res.sendStatus(200)
-  else next()
-})
+
+// app.use((req, res, next) => {
+//   const origin = req.get("referer")
+//   const isWhitelisted = whitelist.find((w) => origin && origin.includes(w))
+//   if (isWhitelisted) {
+//     res.setHeader("Access-Control-Allow-Origin", "*")
+//     res.setHeader(
+//       "Access-Control-Allow-Methods",
+//       "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+//     )
+//     res.setHeader(
+//       "Access-Control-Allow-Headers",
+//       "X-Requested-With,Content-Type,Authorization"
+//     )
+//     res.setHeader("Access-Control-Allow-Credentials", true)
+//   }
+//   // Pass to next layer of middleware
+//   if (req.method === "OPTIONS") res.sendStatus(200)
+//   else next()
+// })
 
 //Error handler
 app.use((err, req, res, next) => {
