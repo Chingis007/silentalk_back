@@ -1,59 +1,50 @@
-const express = require("express")
-const cookieParser = require("cookie-parser")
-const expressSession = require("express-session")
-const passport = require("passport")
-const { OAuth2Client } = require("google-auth-library")
-const cors = require("cors")
-const dotenv = require("dotenv").config()
-const MemoryStore = require("memorystore")(expressSession)
-const app = express()
-
+var express = require("express");
+var cookieParser = require("cookie-parser");
+var expressSession = require("express-session");
+var passport = require("passport");
+var OAuth2Client = require("google-auth-library").OAuth2Client;
+var cors = require("cors");
+var dotenv = require("dotenv").config();
+var MemoryStore = require("memorystore")(expressSession);
+var app = express();
 // "builds": [{ "src": "/index.js", "use": "@vercel/node" }],
-
-app.get("/", (req: any, res: any) => {
-  res.send("Express on Vercel")
-})
-app.use(
-  cors()
-  // {
-  // origin: "*", змінив коли кукіси не сетались в браузері
-  // origin: "*",
-  // origin: true,
-  // credentials: true,
-  // }
-)
-app.use(cookieParser("someSecret"))
+app.get("/", function (req, res) {
+    res.send("Express on Vercel");
+});
+app.use(cors()
+// {
+// origin: "*", змінив коли кукіси не сетались в браузері
+// origin: "*",
+// origin: true,
+// credentials: true,
+// }
+);
+app.use(cookieParser("someSecret"));
 // app.use(cookieParser())
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-
-app.use(
-  expressSession({
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(expressSession({
     secret: "someSecret",
     resave: true,
     saveUninitialized: true,
     // setting the max age to longer duration
     // maxAge: 24 * 60 * 60 * 1000,
-    store: new MemoryStore(),
-  })
-)
-
+    store: new MemoryStore()
+}));
 // Initialize DB
-require("./initDB")()
-
+require("./initDB")();
 // const ProductRoute = require("./Routes/Product.route")
-const UserRoute = require("../Routes/User.route")
+var UserRoute = require("../Routes/User.route");
 // const CookieRoute = require("./Routes/Cookie.route")
-const GoogleRoute = require("../Routes/Google.route")
+var GoogleRoute = require("../Routes/Google.route");
 // const ItemRoute = require("./Routes/Item.route")
 // app.use("/cookies", CookieRoute)
-app.use("/google", GoogleRoute)
+app.use("/google", GoogleRoute);
 // app.use("/products", ProductRoute)
-app.use("/users", UserRoute)
+app.use("/users", UserRoute);
 // app.use("/items", ItemRoute)
-
-app.use(passport.initialize())
-app.use(passport.session())
+app.use(passport.initialize());
+app.use(passport.session());
 //404 handler and pass to error handler
 // app.use((req, res, next) => {
 //   /*
@@ -64,7 +55,6 @@ app.use(passport.session())
 //   // You can use the above code if your not using the http-errors module
 //   next(createError(404, "Not found"))
 // })
-
 // app.use((req, res, next) => {
 //   const origin = req.get("referer")
 //   const isWhitelisted = whitelist.find((w) => origin && origin.includes(w))
@@ -84,20 +74,17 @@ app.use(passport.session())
 //   if (req.method === "OPTIONS") res.sendStatus(200)
 //   else next()
 // })
-
 //Error handler
-app.use((err: any, req: any, res: any, next: any) => {
-  res.status(err.status || 500)
-  res.send({
-    error: {
-      status: err.status || 500,
-      message: err.message,
-    },
-  })
-})
-
-const PORT = process.env.PORT || 80
-
-app.listen(PORT, () => {
-  console.log("Server started on port " + PORT + "...")
-})
+app.use(function (err, req, res, next) {
+    res.status(err.status || 500);
+    res.send({
+        error: {
+            status: err.status || 500,
+            message: err.message
+        }
+    });
+});
+var PORT = process.env.PORT || 80;
+app.listen(PORT, function () {
+    console.log("Server started on port " + PORT + "...");
+});
