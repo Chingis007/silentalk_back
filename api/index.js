@@ -47,8 +47,8 @@ app.use("/google", GoogleRoute)
 app.use("/users", UserRoute)
 // app.use("/items", ItemRoute)
 
-// app.use(passport.initialize())
-// app.use(passport.session())
+app.use(passport.initialize())
+app.use(passport.session())
 //404 handler and pass to error handler
 // app.use((req, res, next) => {
 //   /*
