@@ -150,6 +150,7 @@ module.exports = {
     // create
     try {
       const phoneNumber = req.phoneNumber
+      console.log(phoneNumber)
       const newPassword = generatePassword.randomPassword({
         length: 10,
         characters: [
