@@ -101,34 +101,34 @@ module.exports = {
   },
   verify: async (req, res, next) => {
     try {
+      const oAuth2Client = new OAuth2Client(
+        process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID,
+        process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_SECRET
+      )
+
+      const authHeader = req.headers["myauthprop"]
+      if (!authHeader) {
+        next(createError.Unauthorized)
+      }
+      const token = authHeader
+      const ticket = await oAuth2Client.verifyIdToken({
+        idToken: token,
+        audience: process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID,
+      })
+
+      const payload = ticket.getPayload()
+      if (payload) {
+        req.main_payload = payload
+        // console.log(req.main_payload)
+        res.userId = payload["sub"]
+        // res.send(payload)
+
+        next()
+      } else {
+        next(createError.Unauthorized)
+      }
     } catch (error) {
       console.log(error)
-    }
-    const oAuth2Client = new OAuth2Client(
-      process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID,
-      process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_SECRET
-    )
-
-    const authHeader = req.headers["myauthprop"]
-    if (!authHeader) {
-      next(createError.Unauthorized)
-    }
-    const token = authHeader
-    const ticket = await oAuth2Client.verifyIdToken({
-      idToken: token,
-      audience: process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID,
-    })
-
-    const payload = ticket.getPayload()
-    if (payload) {
-      req.main_payload = payload
-      // console.log(req.main_payload)
-      res.userId = payload["sub"]
-      // res.send(payload)
-
-      next()
-    } else {
-      next(createError.Unauthorized)
     }
   },
   // createOrLogin: async (req, res, next) => {
