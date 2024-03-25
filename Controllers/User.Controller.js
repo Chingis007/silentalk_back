@@ -8,10 +8,6 @@ const jwt = require("jsonwebtoken")
 // import * as jose from "jose"
 
 module.exports = {
-  mypost: async (req, res, next) => {
-    console.log("silly is good")
-    return res.send("Billy dilly mega silly")
-  },
   CheckIfTokenValid: async (req, res, next) => {
     const auth_token = req.params.tokenCookie
     try {
@@ -154,7 +150,6 @@ module.exports = {
     // create
     try {
       const phoneNumber = req.phoneNumber
-      console.log(phoneNumber)
       const newPassword = generatePassword.randomPassword({
         length: 10,
         characters: [
