@@ -122,7 +122,7 @@ module.exports = {
         req.main_payload = payload
         // console.log(req.main_payload)
         res.userId = payload["sub"]
-        res.phoneNumber = phoneNumber
+        req.phoneNumber = phoneNumber
         // res.send(payload)
         next()
       } else {

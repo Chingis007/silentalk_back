@@ -98,9 +98,6 @@ module.exports = {
       return res.status(403).json({ error: "Something else wrong" })
     }
   },
-  doSilly: async (req, res, next) => {
-    res.send("Silly things are working")
-  },
   findGoogleUserByEmail: async (req, res, next) => {
     const email = req.main_payload.email
     const password = req.main_payload.password
@@ -155,9 +152,8 @@ module.exports = {
     // login
 
     // create
-    console.log("we are here1")
     try {
-      const phoneNumber = res.phoneNumber
+      const phoneNumber = req.phoneNumber
       console.log(phoneNumber)
       const newPassword = generatePassword.randomPassword({
         length: 10,
