@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken")
 
 module.exports = {
   mypost: async (req, res, next) => {
+    console.log("silly is good")
     return res.send("Billy dilly mega silly")
   },
   CheckIfTokenValid: async (req, res, next) => {
