@@ -94,12 +94,16 @@ module.exports = {
       await user.save()
       res.send("Awaiting code confirmation")
       return
-    } catch (err) {
-      console.log("ERROR: ", err)
+    } catch (error) {
+      console.error("ERROR: ", error)
     }
     next()
   },
   verify: async (req, res, next) => {
+    try {
+    } catch (error) {
+      console.log(error)
+    }
     const oAuth2Client = new OAuth2Client(
       process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID,
       process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_SECRET
