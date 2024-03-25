@@ -127,6 +127,7 @@ module.exports = {
       } else {
         next(createError.Unauthorized)
       }
+      console.log("its good1")
     } catch (error) {
       console.log(error)
     }
