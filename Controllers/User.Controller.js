@@ -102,7 +102,6 @@ module.exports = {
     res.send("Silly things are working")
   },
   findGoogleUserByEmail: async (req, res, next) => {
-    console.log("its good2")
     const email = req.main_payload.email
     const password = req.main_payload.password
     // const password = req.params.password
