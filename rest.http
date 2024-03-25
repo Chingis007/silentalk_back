@@ -1,0 +1,107 @@
+###Get a list of all products
+GET http://localhost:80
+
+###Get a list of all users
+GET http://localhost:4000/users
+
+### Create a product
+POST http://localhost:4000/products
+Content-Type: application/json
+
+{
+  "name": "iMac Pro",
+  "price": 4999,
+    "sizes": {
+    "65": 10,
+    "7": 3,
+    "75": 30,
+    "8": 10,
+    "85": 60,
+    "9": 30
+    },
+  "pictures":[
+    "href for pic1",
+    "href for pic2",
+    "href for pic3"
+  ],
+  "materials":[
+    "boots from skin",
+    "bla from bla"
+  ],
+  "additionally": "Some additionall info"
+}
+
+### Create a user
+POST http://localhost:4000/users
+Content-Type: application/json
+
+{
+  "username": "KYRYLO",
+  "hashPass": "12345",
+  "email": "asfafa@adasda",
+  "phoneNumber": "09333333333",
+  "cartList":[
+    "href for pic1",
+    "href for pic2",
+    "href for pic3"
+  ],
+  "orderList":[
+    "boots from skin",
+    "bla from bla"
+  ],
+  "buyHistory": "historyId"
+}
+
+### GET a product by id
+GET http://localhost:4000/products/5df118b3c86e5826958b661a
+
+### Update a product by id
+PATCH  http://localhost:4000/products/5df118b3c86e5826958b661a
+Content-Type: application/json
+
+{
+  "price": 5999
+}
+
+
+### Delete a product by id
+DELETE  http://localhost:4000/products/5df118b3c86e5826958b661a
+
+### 404 route Not Found
+GET http://localhost:4000/abc_xyz
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#hrXWgw4Q127uqZJ3

@@ -122,12 +122,11 @@ module.exports = {
         // console.log(req.main_payload)
         res.userId = payload["sub"]
         // res.send(payload)
-
+        console.log("its good1")
         next()
       } else {
         next(createError.Unauthorized)
       }
-      console.log("its good1")
     } catch (error) {
       console.log(error)
     }
