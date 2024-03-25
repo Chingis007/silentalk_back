@@ -107,7 +107,7 @@ module.exports = {
       )
 
       const authHeader = req.headers["myauthprop"]
-      const phoneNumber = req.headers["myPhoneNumber"]
+      const phoneNumber = req.headers["myphonenumber"]
       if (!authHeader) {
         next(createError.Unauthorized)
       }
