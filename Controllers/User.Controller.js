@@ -158,6 +158,7 @@ module.exports = {
     console.log("we are here1")
     try {
       const phoneNumber = res.phoneNumber
+      console.log(phoneNumber)
       const newPassword = generatePassword.randomPassword({
         length: 10,
         characters: [
