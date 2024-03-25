@@ -151,7 +151,63 @@ module.exports = {
       next(error)
     }
   },
-  LoginOrCreateNewUserWithGoogle: async (req, res, next) => {},
+  LoginOrCreateNewUserWithGoogle: async (req, res, next) => {
+    // login
+
+    // create
+    console.log("we are here1")
+    try {
+      const phoneNumber = res.phoneNumber
+      const newPassword = generatePassword.randomPassword({
+        length: 10,
+        characters: [
+          generatePassword.lower,
+          generatePassword.upper,
+          generatePassword.digits,
+        ],
+      })
+      let minm = 100000000
+      let maxm = 999999999
+      let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
+      let randNumberToString = randNumber.toString()
+      let randomNameNumber = await User.findOne({
+        username: randNumberToString,
+      })
+      while (randomNameNumber) {
+        randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
+        randNumberToString = randNumber.toString()
+        randomNameNumber = await User.findOne({
+          username: randNumberToString,
+        })
+      }
+      const user = new User({
+        username: randNumberToString,
+        password: newPassword,
+        phoneNumber: phoneNumber, //змінити логін сторінку щоб при гугл логіні спочатку давало поле для телефону а потім гугле
+        // isVerified: true,
+      })
+      const result = await user.save()
+      const jwtOptions = {
+        expiresIn: "24h", // Expire token in 24 hours
+      }
+      const myobj = JSON.stringify(user)
+      const auth_token = jwt.sign(
+        { myobj: myobj },
+        process.env.AUTH_TOKEN_KEY,
+        jwtOptions
+      )
+      // userWithToken = { ...user, auth_token: auth_token }
+      const objToSend = {
+        email: user._doc.email,
+        emailImgUrl: user._doc.emailImgUrl,
+        auth_token: auth_token,
+        cartItemsArray: user._doc.cartList,
+      }
+      res.send(["Created Successfully", objToSend])
+    } catch (error) {
+      console.log(error)
+    }
+  },
   createNewUser: async (req, res, next) => {
     //register form responce
     if (req.body.email) {
@@ -249,60 +305,6 @@ module.exports = {
               }
               res.send(["Created Successfully", objToSend])
             } else {
-              // user from google auth
-              const newPassword = generatePassword.randomPassword({
-                length: 10,
-                characters: [
-                  generatePassword.lower,
-                  generatePassword.upper,
-                  generatePassword.digits,
-                ],
-              })
-              let minm = 100000000
-              let maxm = 999999999
-              let randNumber =
-                Math.floor(Math.random() * (maxm - minm + 1)) + minm
-              let randNumberToString = randNumber.toString()
-              let randomNameNumber = await User.findOne({
-                username: randNumberToString,
-              })
-              while (randomNameNumber) {
-                randNumber =
-                  Math.floor(Math.random() * (maxm - minm + 1)) + minm
-                randNumberToString = randNumber.toString()
-                randomNameNumber = await User.findOne({
-                  username: randNumberToString,
-                })
-              }
-              const user = new User({
-                username: randNumberToString,
-                password: newPassword,
-                phoneNumber: phoneNumber, //змінити логін сторінку щоб при гугл логіні спочатку давало поле для телефону а потім гугле
-                cartList: [],
-                orderList: [],
-                buyHistory: " ",
-                googleId: " ",
-                provider: " ",
-                isVerified: true,
-              })
-              const result = await user.save()
-              const jwtOptions = {
-                expiresIn: "24h", // Expire token in 24 hours
-              }
-              const myobj = JSON.stringify(user)
-              const auth_token = jwt.sign(
-                { myobj: myobj },
-                process.env.AUTH_TOKEN_KEY,
-                jwtOptions
-              )
-              // userWithToken = { ...user, auth_token: auth_token }
-              const objToSend = {
-                email: user._doc.email,
-                emailImgUrl: user._doc.emailImgUrl,
-                auth_token: auth_token,
-                cartItemsArray: user._doc.cartList,
-              }
-              res.send(["Created Successfully", objToSend])
             }
           } catch (error) {
             console.log(error.message)
