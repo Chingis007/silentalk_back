@@ -94,46 +94,32 @@ module.exports = {
       return res.status(403).json({ error: "Something else wrong" })
     }
   },
-  findGoogleUserByEmail: async (req, res, next) => {
+  findGoogleUserByEmailAndLoginIt: async (req, res, next) => {
     const email = req.main_payload.email
-    const password = req.main_payload.password
-    // const password = req.params.password
-    // тут пароль має видатись випадковий, бо чел зайшов за доп гугла
     try {
       const user = await User.findOne({ email: email })
       if (!user) {
         next()
       } else {
-        argon2
-          .verify(user.password, password)
-          .catch(() => {
-            res.send("Wrong password")
-          })
-          .then((match) => {
-            if (match) {
-              const jwtOptions = {
-                expiresIn: "24h", // Expire token in 24 hours
-              }
-              const myobj = JSON.stringify(user)
-              const auth_token = jwt.sign(
-                { myobj: myobj },
-                process.env.AUTH_TOKEN_KEY,
-                jwtOptions
-              )
-              // userWithToken = { ...user, auth_token: auth_token }
-              const objToSend = {
-                email: user._doc.email,
-                emailImgUrl: user._doc.emailImgUrl,
-                auth_token: auth_token,
-                cartItemsArray: user._doc.cartList,
-              }
-              res.send(["Email Exists", objToSend])
-              return
-            } else {
-              res.send("Wrong password")
-              return
-            }
-          })
+        //User exist, login it
+        const jwtOptions = {
+          expiresIn: "24h", // Expire token in 24 hours
+        }
+        const myobj = JSON.stringify(user)
+        const auth_token = jwt.sign(
+          { myobj: myobj },
+          process.env.AUTH_TOKEN_KEY,
+          jwtOptions
+        )
+        // userWithToken = { ...user, auth_token: auth_token }
+        const objToSend = {
+          username: user._doc.username,
+          email: user._doc.email,
+          emailImgUrl: user._doc.emailImgUrl,
+          auth_token: auth_token,
+        }
+        res.send(["Email Exists and Logged Successfully", objToSend])
+        return
       }
     } catch (error) {
       console.log(error.message)
@@ -144,12 +130,44 @@ module.exports = {
       next(error)
     }
   },
-  LoginOrCreateNewUserWithGoogle: async (req, res, next) => {
-    // login
-
+  CreateNewUserWithGoogle: async (req, res, next) => {
+    // if (ddasda) {
+    //   // login
+    //   const email = req.main_payload.email
+    //   const password = req.main_payload.password
+    //   argon2
+    //     .verify(user.password, password)
+    //     .catch(() => {
+    //       res.send("Wrong password")
+    //     })
+    //     .then((match) => {
+    //       if (match) {
+    //         const jwtOptions = {
+    //           expiresIn: "24h", // Expire token in 24 hours
+    //         }
+    //         const myobj = JSON.stringify(user)
+    //         const auth_token = jwt.sign(
+    //           { myobj: myobj },
+    //           process.env.AUTH_TOKEN_KEY,
+    //           jwtOptions
+    //         )
+    //         // userWithToken = { ...user, auth_token: auth_token }
+    //         const objToSend = {
+    //           email: user._doc.email,
+    //           emailImgUrl: user._doc.emailImgUrl,
+    //           auth_token: auth_token,
+    //           cartItemsArray: user._doc.cartList,
+    //         }
+    //         res.send(["Email Exists", objToSend])
+    //         return
+    //       }
+    //     })
+    //   try {
+    //   } catch (error) {}
+    // } else {
     // create
     try {
-      const phoneNumber = req.phoneNumber
+      const phoneNumber = req.headers["myphonenumber"]
       const newPassword = generatePassword.randomPassword({
         length: 10,
         characters: [
@@ -172,10 +190,11 @@ module.exports = {
           username: randNumberToString,
         })
       }
+      const username = randNumberToString
       const user = new User({
-        username: randNumberToString,
+        username: username,
         password: newPassword,
-        phoneNumber: phoneNumber, //змінити логін сторінку щоб при гугл логіні спочатку давало поле для телефону а потім гугле
+        phoneNumber: phoneNumber,
         // isVerified: true,
       })
       const result = await user.save()
@@ -190,15 +209,17 @@ module.exports = {
       )
       // userWithToken = { ...user, auth_token: auth_token }
       const objToSend = {
+        username: user._doc.username,
         email: user._doc.email,
         emailImgUrl: user._doc.emailImgUrl,
         auth_token: auth_token,
-        cartItemsArray: user._doc.cartList,
       }
       res.send(["Created Successfully", objToSend])
     } catch (error) {
       console.log(error)
+      res.send(["Creation Failed"])
     }
+    // }
   },
   createNewUser: async (req, res, next) => {
     //register form responce

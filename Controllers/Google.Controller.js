@@ -107,7 +107,7 @@ module.exports = {
       )
 
       const authHeader = req.headers["myauthprop"]
-      const phoneNumber = req.headers["myphonenumber"]
+      // const phoneNumber = req.headers["myphonenumber"]
       if (!authHeader) {
         next(createError.Unauthorized)
       }
@@ -122,7 +122,7 @@ module.exports = {
         req.main_payload = payload
         // console.log(req.main_payload)
         res.userId = payload["sub"]
-        req.phoneNumber = phoneNumber
+        // req.phoneNumber = phoneNumber
         // res.send(payload)
         next()
       } else {

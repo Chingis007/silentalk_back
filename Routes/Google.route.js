@@ -23,8 +23,8 @@ const router = express.Router()
 router.get(
   "/temporfetch",
   GoogleController.verify,
-  UserController.findGoogleUserByEmail, //if find send cookies and return
-  UserController.LoginOrCreateNewUserWithGoogle
+  UserController.findGoogleUserByEmailAndLoginIt, //if find send cookies and return
+  UserController.CreateNewUserWithGoogle
 )
 router.post("/sendmail", GoogleController.sendMail)
 module.exports = router
