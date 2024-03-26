@@ -94,10 +94,11 @@ module.exports = {
       return res.status(403).json({ error: "Something else wrong" })
     }
   },
-  findGoogleUserByEmailAndLoginIt: async (req, res, next) => {
-    const email = req.main_payload.email
+  findGoogleUserByNumberAndLoginIt: async (req, res, next) => {
+    const phoneNumber = req.headers["myphonenumber"]
+    // const email = req.main_payload.email
     try {
-      const user = await User.findOne({ email: email })
+      const user = await User.findOne({ phoneNumber: phoneNumber })
       if (!user) {
         next()
       } else {
@@ -168,14 +169,16 @@ module.exports = {
     // create
     try {
       const phoneNumber = req.headers["myphonenumber"]
-      const newPassword = generatePassword.randomPassword({
-        length: 10,
-        characters: [
-          generatePassword.lower,
-          generatePassword.upper,
-          generatePassword.digits,
-        ],
-      })
+      const newPassword = await argon2.hash(
+        generatePassword.randomPassword({
+          length: 10,
+          characters: [
+            generatePassword.lower,
+            generatePassword.upper,
+            generatePassword.digits,
+          ],
+        })
+      )
       let minm = 100000000
       let maxm = 999999999
       let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
