@@ -17,7 +17,7 @@ router.get("/verifyToken/:tokenCookie", UserController.CheckIfTokenValid)
 
 //Verify token and send user data
 router.get(
-  "/verifyTokenAndSend/:auth_token",
+  "/CheckIfTokenValidAndSendUserData/:auth_token",
   UserController.CheckIfTokenValidAndSendUserData
 )
 //
