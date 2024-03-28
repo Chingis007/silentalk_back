@@ -53,6 +53,7 @@ module.exports = {
   },
   CheckIfTokenValidAndSendUserData: async (req, res, next) => {
     const auth_token = req.params.auth_token
+    console.log(auth_token)
     try {
       if (!auth_token) {
         return res.send("No token send")
@@ -71,10 +72,12 @@ module.exports = {
         // }
         const userInfoObj = JSON.parse(decodedUserInfo.myobj)
         // console.log(userInfoObj)
-        // console.log(userInfoObj.phoneNumber)
+        // console.log(userInfoObj.phoneNumber
+        console.log(userInfoObj)
         const user = await User.findOne({
           phoneNumber: userInfoObj.phoneNumber,
         })
+        console.log(user)
         if (!user) {
           return res.send("Wrong Token")
           throw new Error("Unauthorized")
