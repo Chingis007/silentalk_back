@@ -28,11 +28,11 @@ module.exports = {
         // }
         const userInfoObj = JSON.parse(decodedUserInfo.myobj)
         const user = await User.findOne({
-          email: userInfoObj.email,
+          phoneNumber: userInfoObj.phoneNumber,
         })
         if (!user) {
           return res.send("Wrong Token")
-          throw new Error("Unauthorized")
+          // throw new Error("Unauthorized")
         }
         return res.send("Token valid")
         // ПОВНИЙ РЕСПОНЗ АБО ЛИШЕ ОСНОВНИЙ ОБЖЕКТ
@@ -52,7 +52,7 @@ module.exports = {
     }
   },
   CheckIfTokenValidAndSendUserData: async (req, res, next) => {
-    const auth_token = req.params.tokenCookie
+    const auth_token = req.params.auth_token
     try {
       if (!auth_token) {
         return res.send("No token send")
@@ -70,8 +70,10 @@ module.exports = {
         //   console.log("shit")
         // }
         const userInfoObj = JSON.parse(decodedUserInfo.myobj)
+        // console.log(userInfoObj)
+        // console.log(userInfoObj.phoneNumber)
         const user = await User.findOne({
-          email: userInfoObj.email,
+          phoneNumber: userInfoObj.phoneNumber,
         })
         if (!user) {
           return res.send("Wrong Token")
@@ -79,7 +81,7 @@ module.exports = {
         }
         // return res.send("Token valid")
         // ПОВНИЙ РЕСПОНЗ АБО ЛИШЕ ОСНОВНИЙ ОБЖЕКТ
-        return res.send(userInfoObj)
+        return res.send(["Back is good", userInfoObj])
       } catch (error) {
         if (error.message === "jwt expired") {
           return res.send("Token expired")
@@ -198,6 +200,7 @@ module.exports = {
         username: username,
         password: newPassword,
         phoneNumber: phoneNumber,
+        servicesList: ["silentalk"],
         // isVerified: true,
       })
       const result = await user.save()

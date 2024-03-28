@@ -6,7 +6,11 @@ const PublicSchema = new Schema({
     type: String,
     required: true,
   },
-  groupUniqueCode: {
+  username: {
+    type: String,
+    required: true,
+  },
+  publicUniqueCode: {
     type: String,
     required: true,
   },

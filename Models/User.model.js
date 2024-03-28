@@ -34,6 +34,10 @@ const UserSchema = new Schema({
     type: [],
     required: true,
   },
+  servicesList: {
+    type: [],
+    required: true,
+  },
   googleId: {
     type: String,
   },
