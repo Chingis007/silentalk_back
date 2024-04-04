@@ -2,6 +2,7 @@ const createError = require("http-errors")
 const mongoose = require("mongoose")
 const argon2 = require("argon2")
 const User = require("../Models/User.model")
+const Chanell = require("../Models/Chanell.model")
 const generatePassword = require("secure-random-password")
 const { AUTH_TOKEN_KEY } = process.env
 const jwt = require("jsonwebtoken")
@@ -53,7 +54,6 @@ module.exports = {
   },
   CheckIfTokenValidAndSendUserData: async (req, res, next) => {
     const auth_token = req.params.auth_token
-    console.log(auth_token)
     try {
       if (!auth_token) {
         return res.send("No token send")
@@ -73,18 +73,25 @@ module.exports = {
         const userInfoObj = JSON.parse(decodedUserInfo.myobj)
         // console.log(userInfoObj)
         // console.log(userInfoObj.phoneNumber
-        console.log(userInfoObj)
         const user = await User.findOne({
           phoneNumber: userInfoObj.phoneNumber,
         })
-        console.log(user)
         if (!user) {
           return res.send("Wrong Token")
           throw new Error("Unauthorized")
         }
+        const userToResond = {
+          botsList: user.botsList,
+          chatsList: user.chatsList,
+          groupsList: user.groupsList,
+          servicesList: user.servicesList,
+          chanellsList: user.chanellsList,
+          phoneNumber: user.phoneNumber,
+          username: user.username,
+        }
         // return res.send("Token valid")
         // ПОВНИЙ РЕСПОНЗ АБО ЛИШЕ ОСНОВНИЙ ОБЖЕКТ
-        return res.send(["Back is good", userInfoObj])
+        return res.send(["Back is good", userToResond])
       } catch (error) {
         if (error.message === "jwt expired") {
           return res.send("Token expired")
@@ -361,6 +368,105 @@ module.exports = {
         console.log(err.message);
       }); 
       */
+  },
+  createNewChanell: async (req, res, next) => {
+    try {
+      const auth_token = req.body.auth_token
+      const chanellName = req.body.chanellName
+
+      let chanellDiscription = ""
+      let photoLink = ""
+      if (req.body.photoLink) {
+        photoLink = req.body.photoLink
+      }
+      if (req.body.chanellDiscription) {
+        chanellDiscription = req.body.chanellDiscription
+      }
+
+      const decodedUserInfo = jwt.verify(auth_token, process.env.AUTH_TOKEN_KEY)
+      const userInfoObj = JSON.parse(decodedUserInfo.myobj)
+      const user = await User.findOne({
+        phoneNumber: userInfoObj.phoneNumber,
+      })
+      if (!user) {
+        return res.send("Wrong Token")
+      }
+      const name = user.name
+      const phoneNumber = user.phoneNumber
+
+      let randomCodeNumber
+      let aaa = true
+      let publicUniqueCode
+      while (aaa) {
+        let minm = 100000000
+        let maxm = 999999999
+        let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
+        publicUniqueCode = randNumber.toString()
+        randomCodeNumber = await Chanell.findOne({
+          publicUniqueCode: publicUniqueCode,
+        })
+        if (!randomCodeNumber) {
+          continue
+        }
+      }
+      let randomLinkNumber
+      let bbb = true
+      let link
+      while (bbb) {
+        let minm = 100000000
+        let maxm = 999999999
+        let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
+        link = randNumber.toString()
+        randomLinkNumber = await Chanell.findOne({
+          link: link,
+        })
+        if (!randomLinkNumber) {
+          continue
+        }
+      }
+      const partisipants = [{ phoneNumber: `${phoneNumber}`, admin: "YES" }]
+      const messages = []
+      const pinned = []
+
+      // const handleUpload = async (oneFile: File) => {
+      //   let formData = new FormData()
+      //   formData.append("file", oneFile)
+      //   formData.append("upload_preset", "vbght5om")
+      //   let url = new URL(
+      //     `https://api.cloudinary.com/v1_1/${
+      //       import.meta.env.VITE_REACT_APP_CLOUDINARY_CLOUD_NAME
+      //     }/image/upload`
+      //   )
+      //   return fetch(url, {
+      //     method: "POST",
+      //     body: formData,
+      //   })
+      //     .then(async (response) => {
+      //       const resText = await response.json()
+      //       return resText.secure_url
+      //     })
+      //     .catch((error) => {
+      //       console.log(error)
+      //     })
+      // }
+
+      const chanell = new Chanell({
+        name: chanellName,
+        chanellDiscription: chanellDiscription,
+        publicUniqueCode: publicUniqueCode,
+        link: link,
+        partisipants: partisipants,
+        messages: messages,
+        pinned: pinned,
+        photoLink: photoLink,
+      })
+      const result = await chanell.save()
+      datatosend = result.publicUniqueCode
+      res.send(["chanell created successfully", datatosend])
+    } catch (error) {
+      res.send(`${error}`)
+      return
+    }
   },
   NOT_WORKING_checkAuthToken: async (req, res, next) => {
     const auth_token = req.params.tokenCookie

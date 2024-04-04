@@ -22,7 +22,7 @@ const UserSchema = new Schema({
     type: [],
     required: true,
   },
-  publicsList: {
+  chanellsList: {
     type: [],
     required: true,
   },

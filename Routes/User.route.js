@@ -6,6 +6,8 @@ const UserController = require("../Controllers/User.Controller")
 //Create a new user (register) if exist - login
 router.post("/", UserController.createNewUser)
 
+router.post("/createNewChanell", UserController.createNewChanell)
+
 //check login data And Return Token (login)
 router.get(
   "/check/:email/:password",

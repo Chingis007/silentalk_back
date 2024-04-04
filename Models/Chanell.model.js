@@ -1,16 +1,20 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
-const PublicSchema = new Schema({
+const ChanellSchema = new Schema({
   name: {
     type: String,
     required: true,
   },
-  username: {
+  chanellDiscription: {
     type: String,
     required: true,
   },
   publicUniqueCode: {
+    type: String,
+    required: true,
+  },
+  link: {
     type: String,
     required: true,
   },
@@ -26,7 +30,11 @@ const PublicSchema = new Schema({
     type: [],
     required: true,
   },
+  photoLink: {
+    type: String,
+    required: true,
+  },
 })
 
-const Public = mongoose.model("Public", PublicSchema)
-module.exports = Public
+const Chanell = mongoose.model("Chanell", ChanellSchema)
+module.exports = Chanell
