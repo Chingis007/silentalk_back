@@ -477,7 +477,6 @@ module.exports = {
       if (!user) {
         return res.send("Wrong Token")
       }
-      console.log("1")
       const name = user.name
       const phoneNumber = user.phoneNumber
 
@@ -496,7 +495,6 @@ module.exports = {
           aaa = false
         }
       }
-      console.log("2")
 
       let randomLinkNumber
       let bbb = true
@@ -513,7 +511,6 @@ module.exports = {
           bbb = false
         }
       }
-      console.log("3")
 
       let randomFindNumber
       let ddd = true
@@ -530,7 +527,6 @@ module.exports = {
           ddd = false
         }
       }
-      console.log("4")
 
       const partisipants = [{ phoneNumber: `${phoneNumber}`, admin: "YES" }]
       const messages = []
@@ -557,7 +553,6 @@ module.exports = {
       //       console.log(error)
       //     })
       // }
-      console.log("5")
 
       const chanell = new Chanell({
         group: "chanell",
@@ -572,14 +567,12 @@ module.exports = {
         photoLink: photoLink,
         lastUpdated: new Date().getTime().toString(),
       })
-      console.log("6")
 
-      const result = await Chanell.save()
+      await chanell.save()
       let newUserChanellsList = [...user.chanellsList]
       newUserChanellsList.push({ findname: chanell.findname })
       user.chanellsList = newUserChanellsList
       await user.save()
-      console.log("7")
 
       datatosend = {
         group: "chanell",
@@ -593,7 +586,6 @@ module.exports = {
         pinned: chanell.pinned,
         photoLink: chanell.photoLink,
       }
-      console.log("8")
 
       res.send(["chanell created successfully", datatosend])
     } catch (error) {
