@@ -6,6 +6,10 @@ const UserSchema = new Schema({
     type: String,
     required: true,
   },
+  findlink: {
+    type: String,
+    required: true,
+  },
   password: {
     type: String,
     required: true,

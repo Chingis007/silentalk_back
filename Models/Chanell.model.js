@@ -2,7 +2,16 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
 const ChanellSchema = new Schema({
-  name: {
+  group: {
+    default: "chanell",
+    type: String,
+    required: true,
+  },
+  username: {
+    type: String,
+    required: true,
+  },
+  findname: {
     type: String,
     required: true,
   },
@@ -31,6 +40,10 @@ const ChanellSchema = new Schema({
     required: true,
   },
   photoLink: {
+    type: String,
+    required: true,
+  },
+  lastUpdated: {
     type: String,
     required: true,
   },

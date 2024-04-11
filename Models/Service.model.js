@@ -10,11 +10,19 @@ const ServiceSchema = new Schema({
     type: String,
     required: true,
   },
-  name: {
+  findname: {
     type: String,
     required: true,
   },
   username: {
+    type: String,
+    required: true,
+  },
+  undernameDiscription: {
+    type: String,
+    required: true,
+  },
+  photoLink: {
     type: String,
     required: true,
   },

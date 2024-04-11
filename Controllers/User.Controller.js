@@ -52,6 +52,78 @@ module.exports = {
       return res.status(403).json({ error: "Something else wrong" })
     }
   },
+  CheckTokenAndReturnAllChats: async (req, res, next) => {
+    const auth_token = req.params.auth_token
+    try {
+      if (!auth_token) {
+        return res.send("No token send")
+      }
+      try {
+        const decodedUserInfo = jwt.verify(
+          auth_token,
+          process.env.AUTH_TOKEN_KEY
+        )
+        // Check if user actually exist in db
+        // const modifdecodedUserInfo = decodedUserInfo.myobj
+        // try {
+        //   const userInfoObj = JSON.parse(modifdecodedUserInfo)
+        // } catch {
+        //   console.log("shit")
+        // }
+        const userInfoObj = JSON.parse(decodedUserInfo.myobj)
+        // console.log(userInfoObj)
+        // console.log(userInfoObj.phoneNumber
+        const user = await User.findOne({
+          phoneNumber: userInfoObj.phoneNumber,
+        })
+        if (!user) {
+          return res.send("Wrong Token")
+          throw new Error("Unauthorized")
+        }
+        const userChatsList = {
+          botsList: user.botsList,
+          chatsList: user.chatsList,
+          groupsList: user.groupsList,
+          servicesList: user.servicesList,
+          chanellsList: user.chanellsList,
+        }
+        let allChanells = []
+        for (let i = 0; i < user.chanellsList.length; i++) {
+          const chanell = await chanell.findOne({
+            findname: user.chanellsList[i].findname,
+          })
+          allChanells.push({
+            group: chanell.group,
+            username: chanell.username,
+            findname: chanell.findname,
+            chanellDiscription: chanell.chanellDiscription,
+            publicUniqueCode: chanell.publicUniqueCode,
+            link: chanell.link,
+            partisipants: chanell.partisipants,
+            messages: chanell.messages,
+            pinned: chanell.pinned,
+            photoLink: chanell.photoLink,
+          })
+        }
+        allChanells.sort((a, b) => {
+          return b.lastUpdated - a.lastUpdated
+        })
+
+        return res.send(["Back is good", userChatsList, allChanells])
+      } catch (error) {
+        if (error.message === "jwt expired") {
+          return res.send("Token expired")
+          return res.status(403).json({ error: "Token expired" })
+          // LOGIC FOR RELOGINING
+          console.log(error)
+        } else {
+          console.log(error)
+        }
+      }
+    } catch (error) {
+      return res.status(403).json({ error: "Something else wrong" })
+    }
+  },
   CheckIfTokenValidAndSendUserData: async (req, res, next) => {
     const auth_token = req.params.auth_token
     try {
@@ -424,6 +496,22 @@ module.exports = {
           continue
         }
       }
+
+      let randomFindNumber
+      let ddd = true
+      let findname
+      while (bbb) {
+        let minm = 100000000
+        let maxm = 999999999
+        let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
+        findname = randNumber.toString()
+        randomFindNumber = await Chanell.findOne({
+          findname: findname,
+        })
+        if (!randomFindNumber) {
+          continue
+        }
+      }
       const partisipants = [{ phoneNumber: `${phoneNumber}`, admin: "YES" }]
       const messages = []
       const pinned = []
@@ -451,7 +539,9 @@ module.exports = {
       // }
 
       const chanell = new Chanell({
-        name: chanellName,
+        group: "chanell",
+        username: chanellName,
+        findname: findname,
         chanellDiscription: chanellDiscription,
         publicUniqueCode: publicUniqueCode,
         link: link,
@@ -459,9 +549,25 @@ module.exports = {
         messages: messages,
         pinned: pinned,
         photoLink: photoLink,
+        lastUpdated: new Date().getTime().toString(),
       })
       const result = await chanell.save()
-      datatosend = result.publicUniqueCode
+      let newUserChanellsList = user.chanellsList
+      newUserChanellsList.push(chanell.findname)
+      user.chanellsList = newUserChanellsList
+      await user.save()
+      datatosend = {
+        group: "chanell",
+        username: chanell.username,
+        findname: chanell.username,
+        chanellDiscription: chanell.chanellDiscription,
+        publicUniqueCode: chanell.publicUniqueCode,
+        link: chanell.link,
+        partisipants: chanell.partisipants,
+        messages: chanell.messages,
+        pinned: chanell.pinned,
+        photoLink: chanell.photoLink,
+      }
       res.send(["chanell created successfully", datatosend])
     } catch (error) {
       res.send(`${error}`)
