@@ -98,7 +98,7 @@ module.exports = {
             username: chanell.username,
             findname: chanell.findname,
             chanellDiscription: chanell.chanellDiscription,
-            publicUniqueCode: chanell.publicUniqueCode,
+            chanellUniqueCode: chanell.chanellUniqueCode,
             link: chanell.link,
             partisipants: chanell.partisipants,
             messages: chanell.messages,
@@ -111,12 +111,12 @@ module.exports = {
           const service = await Service.findOne({
             findname: user.servicesList[i].findname,
           })
+          console.log(service)
           allChanells.push({
             group: service.group,
             serviceUniqueCode: service.undernameDiscription,
             findname: service.findname,
             username: service.username,
-            publicUniqueCode: service.publicUniqueCode,
             photoLink: service.photoLink,
             lastUpdated: service.lastUpdated,
           })
@@ -484,14 +484,14 @@ module.exports = {
 
       let randomCodeNumber
       let aaa = true
-      let publicUniqueCode
+      let chanellUniqueCode
       while (aaa) {
         let minm = 100000000
         let maxm = 999999999
         let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
-        publicUniqueCode = randNumber.toString()
+        chanellUniqueCode = randNumber.toString()
         randomCodeNumber = await Chanell.findOne({
-          publicUniqueCode: publicUniqueCode,
+          chanellUniqueCode: chanellUniqueCode,
         })
         if (!randomCodeNumber) {
           aaa = false
@@ -561,7 +561,7 @@ module.exports = {
         username: chanellName,
         findname: findname,
         chanellDiscription: chanellDiscription,
-        publicUniqueCode: publicUniqueCode,
+        chanellUniqueCode: chanellUniqueCode,
         link: link,
         partisipants: partisipants,
         messages: messages,

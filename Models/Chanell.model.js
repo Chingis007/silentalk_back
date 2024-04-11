@@ -19,7 +19,7 @@ const ChanellSchema = new Schema({
     type: String,
     required: true,
   },
-  publicUniqueCode: {
+  chanellUniqueCode: {
     type: String,
     required: true,
   },
