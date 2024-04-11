@@ -104,6 +104,7 @@ module.exports = {
             messages: chanell.messages,
             pinned: chanell.pinned,
             photoLink: chanell.photoLink,
+            lastUpdated: chanell.lastUpdated,
           })
         }
         for (let i = 0; i < user.servicesList.length; i++) {
@@ -117,6 +118,7 @@ module.exports = {
             username: service.username,
             publicUniqueCode: service.publicUniqueCode,
             photoLink: service.photoLink,
+            lastUpdated: service.lastUpdated,
           })
         }
         allChanells.sort((a, b) => {
@@ -585,6 +587,7 @@ module.exports = {
         messages: chanell.messages,
         pinned: chanell.pinned,
         photoLink: chanell.photoLink,
+        lastUpdated: chanell.lastUpdated,
       }
 
       res.send(["chanell created successfully", datatosend])
