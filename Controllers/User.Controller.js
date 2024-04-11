@@ -493,7 +493,7 @@ module.exports = {
           publicUniqueCode: publicUniqueCode,
         })
         if (!randomCodeNumber) {
-          continue
+          aaa = false
         }
       }
       console.log("2")
@@ -510,7 +510,7 @@ module.exports = {
           link: link,
         })
         if (!randomLinkNumber) {
-          continue
+          bbb = false
         }
       }
       console.log("3")
@@ -518,7 +518,7 @@ module.exports = {
       let randomFindNumber
       let ddd = true
       let findname
-      while (bbb) {
+      while (ddd) {
         let minm = 100000000
         let maxm = 999999999
         let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
@@ -527,7 +527,7 @@ module.exports = {
           findname: findname,
         })
         if (!randomFindNumber) {
-          continue
+          ddd = false
         }
       }
       console.log("4")
