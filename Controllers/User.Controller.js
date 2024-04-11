@@ -589,7 +589,8 @@ module.exports = {
 
       res.send(["chanell created successfully", datatosend])
     } catch (error) {
-      res.send(`${error}`)
+      console.log(error)
+      res.send(`Error on Backend`)
       return
     }
   },
