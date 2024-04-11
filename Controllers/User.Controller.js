@@ -3,6 +3,7 @@ const mongoose = require("mongoose")
 const argon2 = require("argon2")
 const User = require("../Models/User.model")
 const Chanell = require("../Models/Chanell.model")
+const Service = require("../Models/Service.model")
 const generatePassword = require("secure-random-password")
 const { AUTH_TOKEN_KEY } = process.env
 const jwt = require("jsonwebtoken")
@@ -89,7 +90,7 @@ module.exports = {
         }
         let allChanells = []
         for (let i = 0; i < user.chanellsList.length; i++) {
-          const chanell = await chanell.findOne({
+          const chanell = await Chanell.findOne({
             findname: user.chanellsList[i].findname,
           })
           allChanells.push({
@@ -106,7 +107,7 @@ module.exports = {
           })
         }
         for (let i = 0; i < user.servicesList.length; i++) {
-          const service = await service.findOne({
+          const service = await Service.findOne({
             findname: user.servicesList[i].findname,
           })
           allChanells.push({
@@ -564,7 +565,7 @@ module.exports = {
         photoLink: photoLink,
         lastUpdated: new Date().getTime().toString(),
       })
-      const result = await chanell.save()
+      const result = await Chanell.save()
       let newUserChanellsList = user.chanellsList
       newUserChanellsList.push(chanell.findname)
       user.chanellsList = newUserChanellsList
