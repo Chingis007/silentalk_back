@@ -6,6 +6,11 @@ const ServiceSchema = new Schema({
   //   type: String,
   //   required: true,
   // },
+  group: {
+    default: "service",
+    type: String,
+    required: true,
+  },
   serviceUniqueCode: {
     type: String,
     required: true,

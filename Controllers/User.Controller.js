@@ -105,6 +105,19 @@ module.exports = {
             photoLink: chanell.photoLink,
           })
         }
+        for (let i = 0; i < user.servicesList.length; i++) {
+          const service = await service.findOne({
+            findname: user.servicesList[i].findname,
+          })
+          allChanells.push({
+            group: service.group,
+            serviceUniqueCode: service.undernameDiscription,
+            findname: service.findname,
+            username: service.username,
+            publicUniqueCode: service.publicUniqueCode,
+            photoLink: service.photoLink,
+          })
+        }
         allChanells.sort((a, b) => {
           return b.lastUpdated - a.lastUpdated
         })
