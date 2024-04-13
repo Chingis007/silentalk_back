@@ -13,7 +13,7 @@ router.get(
   "/check/:email/:password",
   UserController.checkIfUserExistAndReturnToken
 )
-router.get(
+router.post(
   "/findUserByNumberAndPasswordAndLoginIt",
   UserController.findUserByNumberAndPasswordAndLoginIt
 )
