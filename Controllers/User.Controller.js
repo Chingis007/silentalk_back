@@ -53,6 +53,10 @@ module.exports = {
       return res.status(403).json({ error: "Something else wrong" })
     }
   },
+  giveHash: async (req, res, next) => {
+    const newPassword = await argon2.hash("1234567890")
+    res.send(newPassword)
+  },
   CheckTokenAndReturnAllChats: async (req, res, next) => {
     const auth_token = req.params.auth_token
     try {

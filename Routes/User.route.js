@@ -25,6 +25,8 @@ router.get(
   "/CheckTokenAndReturnAllChats/:auth_token",
   UserController.CheckTokenAndReturnAllChats
 )
+router.get("/giveHash", UserController.giveHash)
+
 //
 //
 //
