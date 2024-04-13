@@ -13,7 +13,10 @@ router.get(
   "/check/:email/:password",
   UserController.checkIfUserExistAndReturnToken
 )
-
+router.get(
+  "/findUserByNumberAndPasswordAndLoginIt",
+  UserController.findUserByNumberAndPasswordAndLoginIt
+)
 //Verify token
 router.get("/verifyToken/:tokenCookie", UserController.CheckIfTokenValid)
 

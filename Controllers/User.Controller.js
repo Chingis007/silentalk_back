@@ -81,12 +81,13 @@ module.exports = {
           return res.send("Wrong Token")
           throw new Error("Unauthorized")
         }
-        const userChatsList = {
+        const userList = {
           botsList: user.botsList,
           chatsList: user.chatsList,
           groupsList: user.groupsList,
           servicesList: user.servicesList,
           chanellsList: user.chanellsList,
+          findname: user.findname,
         }
         let allChanells = []
         for (let i = 0; i < user.chanellsList.length; i++) {
@@ -111,7 +112,6 @@ module.exports = {
           const service = await Service.findOne({
             findname: user.servicesList[i].findname,
           })
-          console.log(service)
           allChanells.push({
             group: service.group,
             serviceUniqueCode: service.undernameDiscription,
@@ -125,7 +125,7 @@ module.exports = {
           return b.lastUpdated - a.lastUpdated
         })
 
-        return res.send(["Back is good", userChatsList, allChanells])
+        return res.send(["Back is good", userList, allChanells])
       } catch (error) {
         if (error.message === "jwt expired") {
           return res.send("Token expired")
@@ -194,6 +194,43 @@ module.exports = {
       return res.status(403).json({ error: "Something else wrong" })
     }
   },
+  findUserByNumberAndPasswordAndLoginIt: async (req, res, next) => {
+    const phoneNumber = req.body.phoneNumber
+    const password = req.body.password
+    try {
+      const user = await User.findOne({ phoneNumber: phoneNumber })
+      if (!user) {
+        res.send("Wrong Number")
+      } else {
+        argon2
+          .verify(user.password, password)
+          .catch(() => {
+            res.send(["Wrong password"])
+          })
+          .then((match) => {
+            //User exist, login it
+            const jwtOptions = {
+              expiresIn: "24h", // Expire token in 24 hours
+            }
+            const myobj = JSON.stringify(user)
+            const auth_token = jwt.sign(
+              { myobj: myobj },
+              process.env.AUTH_TOKEN_KEY,
+              jwtOptions
+            )
+            // userWithToken = { ...user, auth_token: auth_token }
+            const objToSend = {
+              findname: user._doc.findname,
+              email: user._doc.email,
+              emailImgUrl: user._doc.emailImgUrl,
+              auth_token: auth_token,
+            }
+            res.send(["Logged Successfully", objToSend])
+            return
+          })
+      }
+    } catch (error) {}
+  },
   findGoogleUserByNumberAndLoginIt: async (req, res, next) => {
     const phoneNumber = req.headers["myphonenumber"]
     // const email = req.main_payload.email
@@ -214,7 +251,7 @@ module.exports = {
         )
         // userWithToken = { ...user, auth_token: auth_token }
         const objToSend = {
-          username: user._doc.username,
+          findname: user._doc.findname,
           email: user._doc.email,
           emailImgUrl: user._doc.emailImgUrl,
           auth_token: auth_token,
@@ -268,6 +305,7 @@ module.exports = {
     // } else {
     // create
     try {
+      const email = req.main_payload.email
       const phoneNumber = req.headers["myphonenumber"]
       const newPassword = await argon2.hash(
         generatePassword.randomPassword({
@@ -298,7 +336,10 @@ module.exports = {
         username: username,
         password: newPassword,
         phoneNumber: phoneNumber,
-        servicesList: ["silentalk"],
+        servicesList: [
+          { findname: "silentalk", archived: "no", muted: "no", pinned: "no" },
+        ],
+        email: email,
         // isVerified: true,
       })
       const result = await user.save()
@@ -397,10 +438,11 @@ module.exports = {
               }
               const user = new User({
                 username: randNumberToString,
+                findname: randNumberToString,
                 password: req.body.password,
                 phoneNumber: req.body.phoneNumber,
                 groupsList: req.body.groupsList,
-                publicsList: req.body.publicsList,
+                chanellsList: req.body.chanellsList,
                 chatsList: req.body.chatsList,
                 botsList: req.body.botsList,
               })
@@ -474,13 +516,12 @@ module.exports = {
       const decodedUserInfo = jwt.verify(auth_token, process.env.AUTH_TOKEN_KEY)
       const userInfoObj = JSON.parse(decodedUserInfo.myobj)
       const user = await User.findOne({
-        phoneNumber: userInfoObj.phoneNumber,
+        findname: userInfoObj.findname,
       })
       if (!user) {
         return res.send("Wrong Token")
       }
-      const name = user.name
-      const phoneNumber = user.phoneNumber
+      const userFindname = user.findname
 
       let randomCodeNumber
       let aaa = true
@@ -530,7 +571,7 @@ module.exports = {
         }
       }
 
-      const partisipants = [{ phoneNumber: `${phoneNumber}`, admin: "YES" }]
+      const partisipants = [{ findname: `${userFindname}`, admin: "YES" }]
       const messages = []
       const pinned = []
 

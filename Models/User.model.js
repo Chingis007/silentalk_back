@@ -6,7 +6,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
   },
-  findlink: {
+  findname: {
     type: String,
     required: true,
   },
@@ -42,17 +42,17 @@ const UserSchema = new Schema({
     type: [],
     required: true,
   },
-  googleId: {
-    type: String,
-  },
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
-  pinCodeVerifyString: {
-    type: String,
-    required: false,
-  },
+  // googleId: {
+  //   type: String,
+  // },
+  // isVerified: {
+  //   type: Boolean,
+  //   default: false,
+  // },
+  // pinCodeVerifyString: {
+  //   type: String,
+  //   required: false,
+  // },
 })
 
 const User = mongoose.model("User", UserSchema)
