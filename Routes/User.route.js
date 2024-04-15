@@ -7,6 +7,7 @@ const UserController = require("../Controllers/User.Controller")
 router.post("/", UserController.createNewUser)
 
 router.post("/createNewChanell", UserController.createNewChanell)
+router.post("/updateChanellChat", UserController.updateChanellChat)
 
 //check login data And Return Token (login)
 router.get(

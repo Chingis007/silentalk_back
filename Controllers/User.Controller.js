@@ -844,6 +844,48 @@ module.exports = {
       }
     }
   },
+  updateChanellChat: async (req, res, next) => {
+    try {
+      const auth_token = req.body.auth_token
+      const findname = req.body.findname
+      const newMessage = req.body.newMessage
+
+      const decodedUserInfo = jwt.verify(auth_token, process.env.AUTH_TOKEN_KEY)
+      const userInfoObj = JSON.parse(decodedUserInfo.myobj)
+      const user = await User.findOne({
+        findname: userInfoObj.findname,
+      })
+      if (!user) {
+        return res.send("Wrong Token")
+      }
+      const userFindname = user.findname
+
+      const chanell = await Chanell.findOne({
+        findname: findname,
+      })
+
+      for (let i = 0; i < chanell.partisipants.length; i++) {
+        if (chanell.partisipants[i].findname == findname) {
+          if (chanell.partisipants[i].admin != "yes") {
+            return res.send("Not an Admin")
+          } else {
+            return
+          }
+        }
+      }
+      chanell.messages.push(newMessage)
+      await chanell.save()
+
+      datatosend = {
+        messages: chanell.messages,
+      }
+      res.send(["chanell messages updated successfully", datatosend])
+    } catch (error) {
+      console.log(error)
+      res.send(`Error on Backend`)
+      return
+    }
+  },
 
   updateAUser: async (req, res, next) => {
     // if (req.body.auth_token) {
