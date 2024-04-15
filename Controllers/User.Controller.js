@@ -872,6 +872,7 @@ module.exports = {
           }
         }
       }
+      chanell.lastUpdated = new Date().getTime().toString()
       chanell.messages.push(newMessage)
       await chanell.save()
 
