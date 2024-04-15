@@ -865,6 +865,9 @@ module.exports = {
       })
 
       for (let i = 0; i < chanell.partisipants.length; i++) {
+        console.log(chanell.partisipants)
+        console.log(chanell.partisipants[i])
+        console.log(chanell.partisipants.findname)
         if (chanell.partisipants[i].findname == findname) {
           if (chanell.partisipants[i].admin != "yes") {
             return res.send("Not an Admin")
