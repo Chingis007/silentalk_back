@@ -863,8 +863,6 @@ module.exports = {
       const chanell = await Chanell.findOne({
         findname: findname,
       })
-      console.log(chanell)
-      console.log(chanell.partisipants)
       for (let i = 0; i < chanell.partisipants.length; i++) {
         if (chanell.partisipants[i].findname == findname) {
           if (chanell.partisipants[i].admin != "yes") {
