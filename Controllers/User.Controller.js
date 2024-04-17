@@ -849,7 +849,6 @@ module.exports = {
       const auth_token = req.body.auth_token
       const findname = req.body.findname
       const newMessage = req.body.newMessage
-      console.log(findname)
       const decodedUserInfo = jwt.verify(auth_token, process.env.AUTH_TOKEN_KEY)
       const userInfoObj = JSON.parse(decodedUserInfo.myobj)
       const user = await User.findOne({
