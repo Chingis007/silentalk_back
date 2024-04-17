@@ -6,7 +6,7 @@ const { OAuth2Client } = require("google-auth-library")
 const cors = require("cors")
 const dotenv = require("dotenv").config()
 const MemoryStore = require("memorystore")(expressSession)
-import { WebSocketServer, WebSocket } from "ws"
+const { WebSocketServer } = require("ws")
 const app = express()
 
 // "builds": [{ "src": "/index.js", "use": "@vercel/node" }],
