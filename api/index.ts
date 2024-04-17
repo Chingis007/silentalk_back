@@ -120,11 +120,11 @@ const s = app.listen(PORT, () => {
   console.log("Server started on port " + PORT + "...")
 })
 
-function onSocketPreError(e: Error) {
+function onSocketPreError(e) {
   console.log(e)
 }
 
-function onSocketPostError(e: Error) {
+function onSocketPostError(e) {
   console.log(e)
 }
 
