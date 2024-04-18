@@ -7,6 +7,9 @@ const cors = require("cors")
 const dotenv = require("dotenv").config()
 const MemoryStore = require("memorystore")(expressSession)
 const { WebSocketServer } = require("ws")
+const jwt = require("jsonwebtoken")
+const jwtSecret = process.env.AUTH_TOKEN_KEY
+
 const app = express()
 
 // "builds": [{ "src": "/index.js", "use": "@vercel/node" }],
@@ -146,10 +149,28 @@ s.on("upgrade", (req, socket, head) => {
   })
 })
 
-wss.on("connection", (ws, req) => {
-  ws.on("error", onSocketPostError)
-
-  ws.on("message", (msg, isBinary) => {
+wss.on("connection", (connection, req) => {
+  connection.on("error", onSocketPostError)
+  const cookies = req.headers.cookie
+  console.log(connection)
+  console.log(req)
+  if (cookies) {
+    const tokenCookieString = cookies
+      .split(";")
+      .find((str) => str.startsWith("token="))
+    if (tokenCookieString) {
+      const token = tokenCookieString.split("=")[1]
+      if (token) {
+        jwt.verify(token, jwtSecret, {}, (err, userData) => {
+          if (err) throw err
+          const { userId, username } = userData
+          connection.userId = userId
+          connection.username = username
+        })
+      }
+    }
+  }
+  connection.on("message", (msg, isBinary) => {
     wss.clients?.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(msg, { binary: isBinary })
@@ -157,7 +178,7 @@ wss.on("connection", (ws, req) => {
     })
   })
 
-  ws.on("close", () => {
+  connection.on("close", () => {
     console.log("Connection closed")
   })
 })
