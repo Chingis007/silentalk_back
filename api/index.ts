@@ -179,9 +179,12 @@ async function verifyToken(token) {
 wss.on("connection", async (connection, req) => {
   connection.on("error", onSocketPostError)
   console.log("1")
-  const cookies = req.headers.cookie
-  console.log(cookies)
+  console.log(req)
   console.log("2")
+  const cookies = req.headers.cookie
+  console.log("3")
+  console.log(req.headers)
+  console.log("4")
   if (cookies) {
     const tokenCookieString = cookies.split(";")
     for (let i = 0; i < tokenCookieString.length; i++) {
