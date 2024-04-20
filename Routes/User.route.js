@@ -4,10 +4,13 @@ const router = express.Router()
 const UserController = require("../Controllers/User.Controller")
 
 //Create a new user (register) if exist - login
-router.post("/", UserController.createNewUser)
+router.post("/createNewUser", UserController.createNewUser)
 
 router.post("/createNewChanell", UserController.createNewChanell)
 router.post("/updateChanellChat", UserController.updateChanellChat)
+
+router.get("/fetchChatByLink", UserController.fetchChatByLink)
+// router.get("/fetchChatByLink", UserController.addToChat)
 
 //check login data And Return Token (login)
 router.get(
@@ -20,6 +23,10 @@ router.post(
 )
 //Verify token
 router.get("/verifyToken/:tokenCookie", UserController.CheckIfTokenValid)
+router.get(
+  "/verifyTokenAndSendData/:auth_token",
+  UserController.CheckIfTokenValidAndSendUserData
+)
 
 //Verify token and send user data
 router.get(

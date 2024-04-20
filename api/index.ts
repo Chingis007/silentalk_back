@@ -8,7 +8,8 @@ const dotenv = require("dotenv").config()
 const MemoryStore = require("memorystore")(expressSession)
 const { WebSocketServer } = require("ws")
 const jwt = require("jsonwebtoken")
-const jwtSecret = process.env.AUTH_TOKEN_KEY
+const User = require("../Models/User.model")
+const Chanell = require("../Models/Chanell.model")
 
 const app = express()
 
@@ -25,7 +26,7 @@ app.use((req, res, next) => {
   )
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Access-Control-Allow-Origin,withCredentials,Content-Type, Authorization, X-Content-Type-Options, Accept, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers,myAuthProp,myPhoneNumber"
+    "Access-Control-Allow-Origin,withCredentials,Content-Type, Authorization, X-Content-Type-Options, Accept, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers,myAuthProp,myPhoneNumber,chatLink,chatType "
   )
   res.setHeader("Access-Control-Allow-Credentials", true)
   res.setHeader("Access-Control-Allow-Private-Network", true)
@@ -116,7 +117,6 @@ app.use((err, req, res, next) => {
     },
   })
 })
-
 const PORT = process.env.PORT || 80
 
 const s = app.listen(PORT, () => {
@@ -148,37 +148,104 @@ s.on("upgrade", (req, socket, head) => {
     wss.emit("connection", ws, req)
   })
 })
-
-wss.on("connection", (connection, req) => {
+async function verifyToken(token) {
+  try {
+    const decodedUserInfo = jwt.verify(token, process.env.AUTH_TOKEN_KEY)
+    const userInfoObj = JSON.parse(decodedUserInfo.myobj)
+    return userInfoObj
+    // const user = await User.findOne({
+    //   email: userInfoObj.email,
+    // })
+  } catch (error) {
+    if (error.message === "jwt expired") {
+      //   wss.clients?.forEach((client) => {
+      //     if (client.readyState === WebSocket.OPEN) {
+      //       client.send({ error: "Token expired" })
+      //     }
+      //   })
+      //   console.log(error)
+      return { token: "expired" }
+      // LOGIC FOR RELOGINING
+    } else {
+      // wss.clients?.forEach((client) => {
+      //   if (client.readyState === WebSocket.OPEN) {
+      //     client.send({ error: "Some token error" })
+      //   }
+      // })
+      return { token: "bad" }
+    }
+  }
+}
+wss.on("connection", async (connection, req) => {
   connection.on("error", onSocketPostError)
   const cookies = req.headers.cookie
-  console.log(connection)
-  console.log(req)
-  // if (cookies) {
-  //   const tokenCookieString = cookies
-  //     .split(";")
-  //     .find((str) => str.startsWith("token="))
-  //   if (tokenCookieString) {
-  //     const token = tokenCookieString.split("=")[1]
-  //     if (token) {
-  //       jwt.verify(token, jwtSecret, {}, (err, userData) => {
-  //         if (err) throw err
-  //         const { userId, username } = userData
-  //         connection.userId = userId
-  //         connection.username = username
-  //       })
-  //     }
-  //   }
-  // }
-  connection.on("message", (msg, isBinary) => {
-    wss.clients?.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(msg, { binary: isBinary })
+  if (cookies) {
+    const tokenCookieString = cookies.split(";")
+    for (let i = 0; i < tokenCookieString.length; i++) {
+      let oneCookieArray = tokenCookieString[i].split("=")
+      if (oneCookieArray[0].trim() == "auth_token") {
+        const auth_token = oneCookieArray[1].trim()
+        const userObject = await verifyToken(auth_token)
+        connection.findname = userObject.findname
       }
-    })
+    }
+  }
+  connection.on("message", async (msg) => {
+    try {
+      // msg = {
+      //   type:"addMsgToChanell"
+      //   findname:"12521512341"
+      //   newMessage:{
+      // img:"",
+      // comentary:"",
+      // emotions:[]
+      //   }
+      // }
+      const userFindname = connection.findname
+      msg = JSON.parse(msg)
+      if (msg.type == "chanell") {
+        const user = await User.findOne({
+          findname: userFindname.findname,
+        })
+        const chanell = await Chanell.findOne({
+          findname: msg.findname,
+        })
+
+        for (let i = 0; i < chanell.partisipants.length; i++) {
+          if (chanell.partisipants[i].findname == userFindname) {
+            if (chanell.partisipants[i].admin != "yes") {
+              return
+            }
+          }
+        }
+        chanell.lastUpdated = new Date().getTime().toString()
+        chanell.messages.push(msg.newMessage)
+        await chanell.save()
+
+        const allPartisipants = chanell.partisipants
+        let allClientsToSendUpdate = <string[]>[]
+        for (let i = 0; i < allPartisipants.length; i++) {
+          allClientsToSendUpdate.push(allPartisipants[i].findname)
+        }
+        // console.log(allClientsToSendUpdate)
+        wss.clients?.forEach((client, index) => {
+          if (allClientsToSendUpdate.includes(client.findname)) {
+            // console.log(client.readyState)
+            if (client.readyState == true) {
+              client.send(JSON.stringify(msg))
+            }
+          }
+        })
+      }
+    } catch {
+      ;(error) => {
+        console.log(error)
+        console.log("some error in msges")
+      }
+    }
   })
 
   connection.on("close", () => {
-    console.log("Connection closed")
+    // console.log("Connection closed")
   })
 })

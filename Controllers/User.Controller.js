@@ -148,7 +148,7 @@ module.exports = {
     const auth_token = req.params.auth_token
     try {
       if (!auth_token) {
-        return res.send("No token send")
+        return res.send(["No token send"])
       }
       try {
         const decodedUserInfo = jwt.verify(
@@ -169,17 +169,20 @@ module.exports = {
           phoneNumber: userInfoObj.phoneNumber,
         })
         if (!user) {
-          return res.send("Wrong Token")
+          return res.send(["Wrong Token"])
           throw new Error("Unauthorized")
         }
+        // const userToResond = {
+        //   botsList: user.botsList,
+        //   chatsList: user.chatsList,
+        //   groupsList: user.groupsList,
+        //   servicesList: user.servicesList,
+        //   chanellsList: user.chanellsList,
+        //   phoneNumber: user.phoneNumber,
+        //   username: user.username,
+        // }
         const userToResond = {
-          botsList: user.botsList,
-          chatsList: user.chatsList,
-          groupsList: user.groupsList,
-          servicesList: user.servicesList,
-          chanellsList: user.chanellsList,
-          phoneNumber: user.phoneNumber,
-          username: user.username,
+          findname: user.findname,
         }
         // return res.send("Token valid")
         // ПОВНИЙ РЕСПОНЗ АБО ЛИШЕ ОСНОВНИЙ ОБЖЕКТ
@@ -224,10 +227,12 @@ module.exports = {
             )
             // userWithToken = { ...user, auth_token: auth_token }
             const objToSend = {
-              findname: user._doc.findname,
-              email: user._doc.email,
-              emailImgUrl: user._doc.emailImgUrl,
+              findname: user.findname,
               auth_token: auth_token,
+            }
+            if (req.body.chatLink && req.body.chatType) {
+              req.body.auth_token = auth_token
+              next()
             }
             res.send(["Logged Successfully", objToSend])
             return
@@ -371,119 +376,204 @@ module.exports = {
     // }
   },
   createNewUser: async (req, res, next) => {
-    //register form responce
-    if (req.body.email) {
+    try {
       const phoneNumber = req.body.phoneNumber
-      try {
-        const user = await User.findOne({ phoneNumber: phoneNumber })
-        if (user) {
-          const password = req.body.password
-          try {
-            argon2
-              .verify(user.password, password)
-              .catch(() => {
-                return res.send("User registred but wrong password")
-              })
-              .then((match) => {
-                if (match) {
-                  const jwtOptions = {
-                    expiresIn: "24h", // Expire token in 24 hours
-                  }
-                  const myobj = JSON.stringify(user)
-                  const auth_token = jwt.sign(
-                    { myobj: myobj },
-                    process.env.AUTH_TOKEN_KEY,
-                    jwtOptions
-                  )
-                  // userWithToken = { ...user, auth_token: auth_token }
-                  const objToSend = {
-                    phoneNumber: user._doc.phoneNumber,
-                    username: user._doc.username,
-                    auth_token: auth_token,
-                  }
-                  return res.send(["User Exists", objToSend])
-                  // return res.send(objToSend)
-                } else {
-                  return res.send("User Exists, but wrong password")
-                }
-              })
-          } catch (error) {
-            return res.send("Errr occurred")
-            console.log(error.message)
-            if (error instanceof mongoose.CastError) {
-              next(createError(400, "Invalid User id"))
-              return
+      const password = req.body.password
+      const oldUser = await User.findOne({
+        phoneNumber: phoneNumber,
+      })
+      if (oldUser) {
+        argon2
+          .verify(user.password, password)
+          .catch(() => {
+            res.send([
+              "User is already registered, but wrong password was entered",
+            ])
+          })
+          .then((match) => {
+            //User exist, login it
+            const jwtOptions = {
+              expiresIn: "24h", // Expire token in 24 hours
             }
-            next(error)
-          }
-        } else {
-          try {
-            if (req.body.hasOwnProperty("password")) {
-              //user from register
-              req.body = {
-                ...req.body,
-                password: await argon2.hash(req.body.password),
-              }
-              let minm = 100000000
-              let maxm = 999999999
-              let randNumber =
-                Math.floor(Math.random() * (maxm - minm + 1)) + minm
-              let randNumberToString = randNumber.toString()
-              let randomNameNumber = await User.findOne({
-                username: randNumberToString,
-              })
-              while (randomNameNumber) {
-                randNumber =
-                  Math.floor(Math.random() * (maxm - minm + 1)) + minm
-                randNumberToString = randNumber.toString()
-                randomNameNumber = await User.findOne({
-                  username: randNumberToString,
-                })
-              }
-              const user = new User({
-                username: randNumberToString,
-                findname: randNumberToString,
-                password: req.body.password,
-                phoneNumber: req.body.phoneNumber,
-                groupsList: req.body.groupsList,
-                chanellsList: req.body.chanellsList,
-                chatsList: req.body.chatsList,
-                botsList: req.body.botsList,
-              })
-              const result = await user.save()
-              const jwtOptions = {
-                expiresIn: "24h", // Expire token in 24 hours
-              }
-              const myobj = JSON.stringify(user)
-              const auth_token = jwt.sign(
-                { myobj: myobj },
-                process.env.AUTH_TOKEN_KEY,
-                jwtOptions
-              )
-              // userWithToken = { ...user, auth_token: auth_token }
-              const objToSend = {
-                phoneNumber: user._doc.phoneNumber,
-                username: user._doc.username,
-                auth_token: auth_token,
-              }
-              res.send(["Created Successfully", objToSend])
-            } else {
+            const myobj = JSON.stringify(user)
+            const auth_token = jwt.sign(
+              { myobj: myobj },
+              process.env.AUTH_TOKEN_KEY,
+              jwtOptions
+            )
+            // userWithToken = { ...user, auth_token: auth_token }
+            const objToSend = {
+              findname: user.findname,
+              auth_token: auth_token,
             }
-          } catch (error) {
-            console.log(error.message)
-            if (error.name === "ValidationError") {
-              next(createError(422, error.message))
-              return
-            }
-            next(error)
-          }
-        }
-      } catch {
-        return res.send("Error in email registration validation")
+            res.send(["User Exists", objToSend])
+            return
+          })
       }
-    } else {
-      return res.send("Email had not been send properly to server")
+      const newPassword = await argon2.hash(password)
+      let minm = 100000000
+      let maxm = 999999999
+      let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
+      let randNumberToString = randNumber.toString()
+      let randomNameNumber = await User.findOne({
+        username: randNumberToString,
+      })
+      while (randomNameNumber) {
+        randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
+        randNumberToString = randNumber.toString()
+        randomNameNumber = await User.findOne({
+          username: randNumberToString,
+        })
+      }
+      const username = randNumberToString
+      const user = new User({
+        findname: username,
+        username: username,
+        password: newPassword,
+        phoneNumber: phoneNumber,
+        servicesList: [
+          { findname: "silentalk", archived: "no", muted: "no", pinned: "no" },
+        ],
+        email: "",
+        // isVerified: true,
+      })
+      const result = await user.save()
+      const jwtOptions = {
+        expiresIn: "24h", // Expire token in 24 hours
+      }
+      const myobj = JSON.stringify(user)
+      const auth_token = jwt.sign(
+        { myobj: myobj },
+        process.env.AUTH_TOKEN_KEY,
+        jwtOptions
+      )
+      // userWithToken = { ...user, auth_token: auth_token }
+      const objToSend = {
+        findname: user.findname,
+        auth_token: auth_token,
+      }
+      if (req.body.chatLink && req.body.chatType) {
+        req.body.auth_token = auth_token
+        next()
+      }
+      res.send(["Created Successfully", objToSend])
+    } catch (error) {
+      console.log(error)
+      res.send(["Creation Failed"])
     }
+
+    // if (req.body.email) {
+    //   const phoneNumber = req.body.phoneNumber
+    //   try {
+    //     const user = await User.findOne({ phoneNumber: phoneNumber })
+    //     if (user) {
+    //       const password = req.body.password
+    //       try {
+    //         argon2
+    //           .verify(user.password, password)
+    //           .catch(() => {
+    //             return res.send("User registred but wrong password")
+    //           })
+    //           .then((match) => {
+    //             if (match) {
+    //               const jwtOptions = {
+    //                 expiresIn: "24h", // Expire token in 24 hours
+    //               }
+    //               const myobj = JSON.stringify(user)
+    //               const auth_token = jwt.sign(
+    //                 { myobj: myobj },
+    //                 process.env.AUTH_TOKEN_KEY,
+    //                 jwtOptions
+    //               )
+    //               // userWithToken = { ...user, auth_token: auth_token }
+    //               const objToSend = {
+    //                 phoneNumber: user._doc.phoneNumber,
+    //                 username: user._doc.username,
+    //                 auth_token: auth_token,
+    //               }
+    //               return res.send(["User Exists", objToSend])
+    //               // return res.send(objToSend)
+    //             } else {
+    //               return res.send("User Exists, but wrong password")
+    //             }
+    //           })
+    //       } catch (error) {
+    //         return res.send("Errr occurred")
+    //         console.log(error.message)
+    //         if (error instanceof mongoose.CastError) {
+    //           next(createError(400, "Invalid User id"))
+    //           return
+    //         }
+    //         next(error)
+    //       }
+    //     } else {
+    //       try {
+    //         if (req.body.hasOwnProperty("password")) {
+    //           //user from register
+    //           req.body = {
+    //             ...req.body,
+    //             password: await argon2.hash(req.body.password),
+    //           }
+    //           let minm = 100000000
+    //           let maxm = 999999999
+    //           let randNumber =
+    //             Math.floor(Math.random() * (maxm - minm + 1)) + minm
+    //           let randNumberToString = randNumber.toString()
+    //           let randomNameNumber = await User.findOne({
+    //             username: randNumberToString,
+    //           })
+    //           while (randomNameNumber) {
+    //             randNumber =
+    //               Math.floor(Math.random() * (maxm - minm + 1)) + minm
+    //             randNumberToString = randNumber.toString()
+    //             randomNameNumber = await User.findOne({
+    //               username: randNumberToString,
+    //             })
+    //           }
+    //           const user = new User({
+    //             username: randNumberToString,
+    //             findname: randNumberToString,
+    //             password: req.body.password,
+    //             phoneNumber: req.body.phoneNumber,
+    //             groupsList: req.body.groupsList,
+    //             chanellsList: req.body.chanellsList,
+    //             chatsList: req.body.chatsList,
+    //             botsList: req.body.botsList,
+    //           })
+    //           const result = await user.save()
+    //           const jwtOptions = {
+    //             expiresIn: "24h", // Expire token in 24 hours
+    //           }
+    //           const myobj = JSON.stringify(user)
+    //           const auth_token = jwt.sign(
+    //             { myobj: myobj },
+    //             process.env.AUTH_TOKEN_KEY,
+    //             jwtOptions
+    //           )
+    //           // userWithToken = { ...user, auth_token: auth_token }
+    //           const objToSend = {
+    //             phoneNumber: user._doc.phoneNumber,
+    //             username: user._doc.username,
+    //             auth_token: auth_token,
+    //           }
+    //           res.send(["Created Successfully", objToSend])
+    //         } else {
+    //         }
+    //       } catch (error) {
+    //         console.log(error.message)
+    //         if (error.name === "ValidationError") {
+    //           next(createError(422, error.message))
+    //           return
+    //         }
+    //         next(error)
+    //       }
+    //     }
+    //   } catch {
+    //     return res.send("Error in email registration validation")
+    //   }
+    // } else {
+    //   return res.send("Email had not been send properly to server")
+    // }
 
     /*Or:
     If you want to use the Promise based approach*/
@@ -640,6 +730,26 @@ module.exports = {
       console.log(error)
       res.send(`Error on Backend`)
       return
+    }
+  },
+  fetchChatByLink: async (req, res, next) => {
+    const chatLink = req.headers["chatlink"]
+    const chatType = req.headers["chattype"]
+    switch (chatType) {
+      case "chanell":
+        const oldChanell = await Chanell.findOne({
+          link: chatLink,
+        })
+        if (!oldChanell) {
+          res.send(["No chanell matching this link"])
+          break
+        }
+        const chanellFindname = oldChanell.findname
+        const username = oldChanell.username
+        res.send(["Chanell exists", chanellFindname, username])
+        break
+      case "service":
+        break
     }
   },
   NOT_WORKING_checkAuthToken: async (req, res, next) => {
@@ -871,6 +981,7 @@ module.exports = {
           }
         }
       }
+
       chanell.lastUpdated = new Date().getTime().toString()
       chanell.messages.push(newMessage)
       await chanell.save()
@@ -887,52 +998,53 @@ module.exports = {
   },
 
   updateAUser: async (req, res, next) => {
-    // if (req.body.auth_token) {
-    // const auth_token = req.body.auth_token
-    const auth_token = req.body[req.body.length - 1]
-    // const auth_token = req.body.auth_token
     try {
-      if (!auth_token) {
-        throw new Error("Unauthorized")
-      }
-      try {
-        const decodedUserInfo = jwt.verify(
-          auth_token,
-          process.env.AUTH_TOKEN_KEY
-        )
-      } catch (error) {
-        if (error.message === "jwt expired") {
-          return res.status(403).json({ error: "Token expired" })
-          // LOGIC FOR RELOGINING
-          console.log(error)
-        } else {
-          console.log(error)
-          return res.status(403).json({ error: "Some token error" })
-        }
-      }
+      const auth_token = req.body.auth_token
+      const chatLink = req.body.chatLink
+      const chatType = req.body.chatType
+
       const decodedUserInfo = jwt.verify(auth_token, process.env.AUTH_TOKEN_KEY)
       const userInfoObj = JSON.parse(decodedUserInfo.myobj)
       const user = await User.findOne({
-        email: userInfoObj.email,
+        findname: userInfoObj.findname,
       })
       if (!user) {
-        throw new Error("Unauthorized")
+        res.send(["Wrong Token"])
+        return
       }
-      // delete req.body.auth_token
-      // const newList = [...user.cartList]
-      // newList.push(req.body)
-      // user.cartList = newList
-      const newList = [...req.body]
-      newList.pop()
-      // if (Math.abs(user.cartList.length - newList.length) == 1) {
-      user.cartList = newList
-      await user.save()
-      res.send(["CartList Updated"])
-      // }
+      const userFindname = user.findname
+
+      switch (chatType) {
+        case "chanell":
+          const chanell = await Chanell.findOne({
+            link: chatLink,
+          })
+          for (let i = 0; i < chanell.partisipants.length; i++) {
+            if (chanell.partisipants[i].findname == user.findname) {
+              res.send(["User is already subscribed"], userFindname, auth_token)
+              break
+            }
+          }
+          let newUserChanellsList = [...user.chanellsList]
+          newUserChanellsList.push({ findname: chanell.findname })
+          user.chanellsList = newUserChanellsList
+          await user.save()
+          let newChanellsPartisipantsList = [...chanell.partisipants]
+          newChanellsPartisipantsList.push({
+            findname: user.findname,
+            admin: "no",
+          })
+          chanell.partisipants = newChanellsPartisipantsList
+          await chanell.save()
+          res.send(["User Updated", userFindname, auth_token])
+          break
+        case "service":
+          break
+      }
     } catch (error) {
-      return res.status(403).json({ error: "Unauthorized" })
+      console.log(error)
+      res.send(["Some Error"])
     }
-    // }
   },
   getUsersCart: async (req, res, next) => {
     const auth_token = req.params.tokenCookie
