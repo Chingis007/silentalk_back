@@ -4,7 +4,7 @@
   "main": "api/index.ts",
   "scripts": {
     "start": "node api/index.js",
-    "dev": "node api/index.ts"
+    "dev": "node api/index.js"
   },
   "author": "Me",
   "license": "ISC",
