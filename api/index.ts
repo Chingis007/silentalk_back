@@ -223,12 +223,14 @@ wss.on("connection", async (connection, req) => {
         await chanell.save()
 
         const allPartisipants = chanell.partisipants
-        let allClientsToSendUpdate: any
+        let allClientsToSendUpdate = []
         for (let i = 0; i < allPartisipants.length; i++) {
+          // @ts-ignore
           allClientsToSendUpdate.push(allPartisipants[i].findname)
         }
         // console.log(allClientsToSendUpdate)
         wss.clients?.forEach((client, index) => {
+          // @ts-ignore
           if (allClientsToSendUpdate.includes(client.findname)) {
             // console.log(client.readyState)
             if (client.readyState == true) {
