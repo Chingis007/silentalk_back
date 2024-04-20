@@ -135,7 +135,9 @@ const wss = new WebSocketServer({ noServer: true })
 
 s.on("upgrade", (req, socket, head) => {
   socket.on("error", onSocketPreError)
-
+  console.log("00")
+  console.log(req.headers)
+  console.log("11")
   // perform auth
   if (!!req.headers["BadAuth"]) {
     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n")
