@@ -135,9 +135,6 @@ const wss = new WebSocketServer({ noServer: true })
 
 s.on("upgrade", (req, socket, head) => {
   socket.on("error", onSocketPreError)
-  console.log("00")
-  console.log(req.headers)
-  console.log("11")
   // perform auth
   if (!!req.headers["BadAuth"]) {
     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n")
@@ -180,13 +177,10 @@ async function verifyToken(token) {
 }
 wss.on("connection", async (connection, req) => {
   connection.on("error", onSocketPostError)
+  console.log(`${req.url}`)
   console.log("1")
-  console.log(req)
   console.log("2")
   const cookies = req.headers.cookie
-  console.log("3")
-  console.log(req.headers)
-  console.log("4")
   if (cookies) {
     const tokenCookieString = cookies.split(";")
     for (let i = 0; i < tokenCookieString.length; i++) {
