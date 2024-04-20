@@ -187,6 +187,7 @@ wss.on("connection", async (connection, req) => {
         const auth_token = oneCookieArray[1].trim()
         const userObject = await verifyToken(auth_token)
         connection.findname = userObject.findname
+        console.log(connection.findname)
       }
     }
   }
@@ -202,6 +203,7 @@ wss.on("connection", async (connection, req) => {
       //   }
       // }
       const userFindname = connection.findname
+      console.log(userFindname)
       msg = JSON.parse(msg)
       if (msg.type == "chanell") {
         const user = await User.findOne({
