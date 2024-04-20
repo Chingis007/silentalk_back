@@ -178,21 +178,20 @@ async function verifyToken(token) {
 wss.on("connection", async (connection, req) => {
   connection.on("error", onSocketPostError)
   console.log(`${req.url}`)
-  console.log("1")
-  console.log("2")
-  const cookies = req.headers.cookie
-  if (cookies) {
-    const tokenCookieString = cookies.split(";")
-    for (let i = 0; i < tokenCookieString.length; i++) {
-      let oneCookieArray = tokenCookieString[i].split("=")
-      if (oneCookieArray[0].trim() == "auth_token") {
-        const auth_token = oneCookieArray[1].trim()
-        const userObject = await verifyToken(auth_token)
-        connection.findname = userObject.findname
-        console.log(connection.findname)
-      }
-    }
-  }
+  const auth_token = req.url.slice(1)
+  // const cookies = req.headers.cookie
+  // if (cookies) {
+  //   const tokenCookieString = cookies.split(";")
+  //   for (let i = 0; i < tokenCookieString.length; i++) {
+  //     let oneCookieArray = tokenCookieString[i].split("=")
+  //     if (oneCookieArray[0].trim() == "auth_token") {
+  //       const auth_token = oneCookieArray[1].trim()
+  const userObject = await verifyToken(auth_token)
+  connection.findname = userObject.findname
+  console.log(connection.findname)
+  //     }
+  //   }
+  // }
   connection.on("message", async (msg) => {
     try {
       // msg = {
