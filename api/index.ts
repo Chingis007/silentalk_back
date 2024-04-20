@@ -223,7 +223,7 @@ wss.on("connection", async (connection, req) => {
         await chanell.save()
 
         const allPartisipants = chanell.partisipants
-        let allClientsToSendUpdate = <string[]>[]
+        let allClientsToSendUpdate: any
         for (let i = 0; i < allPartisipants.length; i++) {
           allClientsToSendUpdate.push(allPartisipants[i].findname)
         }
