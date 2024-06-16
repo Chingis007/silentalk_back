@@ -347,7 +347,8 @@ wss.on("connection", async (connection, req) => {
           // chanell.lastUpdated = new Date().getTime().toString()
           // ЯКЩО ВИДАЛЕНО ОСТАННЄ ТО ЧАС МАЄ СТАТИ
           // ЯК ОСТАННЄ НЕ ДЕЛІТНУТЕ ПОВІДОМЛЕННЯ
-          let arrayOfIndexes: number[] = []
+          // @ts-ignore
+          let arrayOfIndexes = []
           let quantity = 0
           let maxQuantity = toDeleteArray.length
           for (let j = 0; j < chanell.messages.length; ) {
@@ -356,6 +357,7 @@ wss.on("connection", async (connection, req) => {
             }
             for (let u = 0; u < toDeleteArray.length; u++) {
               if (chanell.messages[j].time == toDeleteArray[u]) {
+                // @ts-ignore
                 arrayOfIndexes.push(j)
                 quantity++
               }
