@@ -210,11 +210,14 @@ wss.on("connection", async (connection, req) => {
         })
         let numberToSendBack = 0
         let allMsgsFromAllChatsToDelete = msg.removeDeleted
-        let lastSeenCorrectionArray: {
-          findname: string
-          number: number
-          type: string
-        }[] = []
+        // @ts-ignore
+        let lastSeenCorrectionArray =
+          // : {
+          //   findname: string
+          //   number: number
+          //   type: string
+          // }[]
+          []
         for (let i = 0; i < allMsgsFromAllChatsToDelete.length; i++) {
           if (allMsgsFromAllChatsToDelete[i].chatType == "chanell") {
             const chanell = await Chanell.findOne({
@@ -262,11 +265,14 @@ wss.on("connection", async (connection, req) => {
                   ) {
                     oldUserChanells[j].lastSeenMsg == String(numberToSendBack)
                   }
-                  lastSeenCorrectionArray.push({
-                    findname: allMsgsFromAllChatsToDelete[i].chatFindname,
-                    number: numberToSendBack,
-                    type: "chanell",
-                  })
+                  lastSeenCorrectionArray.push(
+                    // @ts-ignore
+                    {
+                      findname: allMsgsFromAllChatsToDelete[i].chatFindname,
+                      number: numberToSendBack,
+                      type: "chanell",
+                    }
+                  )
                 }
               }
             }
@@ -274,15 +280,18 @@ wss.on("connection", async (connection, req) => {
         }
         // console.log(lastSeenCorrectionArray)
         for (let n = 0; n < lastSeenCorrectionArray.length; n++) {
+          // @ts-ignore
           if (lastSeenCorrectionArray[n].type == "chanell") {
             let oldUserChanells = structuredClone(user.chanellsList)
             for (let y = 0; y < oldUserChanells.length; y++) {
               if (
                 oldUserChanells[y].findname ==
+                // @ts-ignore
                 lastSeenCorrectionArray[n].findname
               ) {
                 oldUserChanells[y].lastSeenMsg = String(
                   Number(oldUserChanells[y].lastSeenMsg) -
+                    // @ts-ignore
                     lastSeenCorrectionArray[n].number
                 )
                 break
