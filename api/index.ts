@@ -323,13 +323,16 @@ wss.on("connection", async (connection, req) => {
           const chanell = await Chanell.findOne({
             findname: msg.findname,
           })
-          let arrayOfDeletedMsgTimesAndIndexes: any = [
-            ...msg.mainInfo.arrayOfObj,
-          ]
-          let toDeleteArray: any = []
-          let toDeleteArrayIndexes: any = []
+          // @ts-ignore
+          let arrayOfDeletedMsgTimesAndIndexes = [...msg.mainInfo.arrayOfObj]
+          // @ts-ignore
+          let toDeleteArray = []
+          // @ts-ignore
+          let toDeleteArrayIndexes = []
           for (let i = 0; i < arrayOfDeletedMsgTimesAndIndexes.length; i++) {
+            // @ts-ignore
             toDeleteArray.push(arrayOfDeletedMsgTimesAndIndexes[i].time)
+            // @ts-ignore
             toDeleteArrayIndexes.push(arrayOfDeletedMsgTimesAndIndexes[i].index)
           }
           for (let i = 0; i < chanell.partisipants.length; i++) {
@@ -375,18 +378,23 @@ wss.on("connection", async (connection, req) => {
             }
             // @ts-ignore
             allClientsToSendUpdate.push(allPartisipants[i].findname)
-          }
-          let listOfClients: any = []
-          let listOfActivePartisipants: any = []
-          let listOfNotActivePartisipants: any = []
-          wss.clients?.forEach((client: any, index) => {
+          } // @ts-ignore
+          let listOfClients = []
+          // @ts-ignore
+          let listOfActivePartisipants = []
+          // @ts-ignore
+          let listOfNotActivePartisipants = []
+          // @ts-ignore
+          wss.clients?.forEach((client, index) => {
             // @ts-ignore
             if (allClientsToSendUpdate.includes(client.findname)) {
               // console.log(client.readyState)
               if (client.readyState == true) {
+                // @ts-ignore
                 listOfActivePartisipants.push(client.findname)
                 client.send(JSON.stringify(msg))
               } else {
+                // @ts-ignore
                 listOfNotActivePartisipants.push(client.findname)
               }
             }
@@ -406,6 +414,7 @@ wss.on("connection", async (connection, req) => {
           for (let i = 0; i < oldChanellPartisipants.length; i++) {
             if (
               listOfNotActivePartisipants.includes(
+                // @ts-ignore
                 oldChanellPartisipants[i].findname
               )
             ) {
@@ -509,7 +518,8 @@ wss.on("connection", async (connection, req) => {
           //     }
           //   }
           // }
-          let countWay: any
+          // @ts-ignore
+          let countWay
           for (let i = 0; i < chanell.messages.length; i++) {
             if (String(chanell.messages[i].time) == String(msg.mainInfo.time)) {
               if (!msg.mainInfo.newEmotionArray.prevEmo.length) {
