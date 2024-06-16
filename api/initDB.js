@@ -10,7 +10,7 @@ module.exports = () => {
       console.log("Mongodb connected....")
     })
     .catch((err) => console.log("Connection Error: " + err.message))
-
+  // mongoose.set("debug", true)
   mongoose.connection.on("connected", () => {
     console.log("Mongoose connected to db...")
   })

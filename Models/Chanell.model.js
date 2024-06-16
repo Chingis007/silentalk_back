@@ -35,10 +35,6 @@ const ChanellSchema = new Schema({
     type: [],
     required: true,
   },
-  pinned: {
-    type: [],
-    required: true,
-  },
   photoLink: {
     type: String,
     required: true,

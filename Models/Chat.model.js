@@ -2,16 +2,25 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
 const ChatSchema = new Schema({
-  connection: {
+  group: {
+    default: "chat",
     type: String,
     required: true,
   },
-  chatUniqueCode: {
+  findname: {
     type: String,
+    required: true,
+  },
+  partisipants: {
+    type: [],
     required: true,
   },
   messages: {
     type: [],
+    required: true,
+  },
+  lastUpdated: {
+    type: String,
     required: true,
   },
 })

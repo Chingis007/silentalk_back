@@ -10,6 +10,43 @@ const jwt = require("jsonwebtoken")
 // import * as jose from "jose"
 
 module.exports = {
+  GlobalSearch: async (req, res, next) => {
+    const toSearchValue = req.params.toSearchValue
+    let finalArray = []
+    let chanell = await Chanell.find({
+      $or: [
+        {
+          findname: { $regex: `${toSearchValue}`, $options: "i" },
+        },
+        {
+          username: { $regex: `${toSearchValue}`, $options: "i" },
+        },
+      ],
+    })
+    let user = await User.find({
+      $or: [
+        {
+          findname: { $regex: `${toSearchValue}`, $options: "i" },
+        },
+        {
+          username: { $regex: `${toSearchValue}`, $options: "i" },
+        },
+      ],
+    })
+    chanell.forEach((element) => {
+      finalArray.push({
+        photoLink: element.photoLink,
+        findname: element.findname,
+      })
+    })
+    user.forEach((element) => {
+      finalArray.push({
+        photoLink: element.photoLink,
+        findname: element.findname,
+      })
+    })
+    return res.send(finalArray)
+  },
   CheckIfTokenValid: async (req, res, next) => {
     const auth_token = req.params.tokenCookie
     try {
@@ -667,7 +704,7 @@ module.exports = {
 
       const partisipants = [{ findname: `${userFindname}`, admin: "YES" }]
       const messages = []
-      const pinned = []
+      // const pinned = []
 
       // const handleUpload = async (oneFile: File) => {
       //   let formData = new FormData()
@@ -707,7 +744,13 @@ module.exports = {
 
       await chanell.save()
       let newUserChanellsList = [...user.chanellsList]
-      newUserChanellsList.push({ findname: chanell.findname })
+      newUserChanellsList.push({
+        findname: chanell.findname,
+        archived: "no",
+        muted: "permanent",
+        pinned: "no",
+        lastSeenMsg: "0",
+      })
       user.chanellsList = newUserChanellsList
       await user.save()
 
@@ -795,7 +838,6 @@ module.exports = {
       return res.status(403).json({ error: "Unauthorized" })
     }
   },
-
   checkIfUserExistAndReturnToken: async (req, res, next) => {
     if (req.params.email) {
       const email = req.params.email
@@ -996,7 +1038,6 @@ module.exports = {
       return
     }
   },
-
   updateAUser: async (req, res, next) => {
     try {
       const auth_token = req.body.auth_token
@@ -1026,7 +1067,13 @@ module.exports = {
             }
           }
           let newUserChanellsList = [...user.chanellsList]
-          newUserChanellsList.push({ findname: chanell.findname })
+          newUserChanellsList.push({
+            findname: chanell.findname,
+            archived: "no",
+            muted: "no",
+            pinned: "no",
+            lastSeenMsg: chanell.messages.length,
+          })
           user.chanellsList = newUserChanellsList
           await user.save()
           let newChanellsPartisipantsList = [...chanell.partisipants]

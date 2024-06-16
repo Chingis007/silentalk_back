@@ -21,6 +21,8 @@ router.post(
   "/findUserByNumberAndPasswordAndLoginIt",
   UserController.findUserByNumberAndPasswordAndLoginIt
 )
+// Global Search
+router.get("/GlobalSearch/:toSearchValue", UserController.GlobalSearch)
 //Verify token
 router.get("/verifyToken/:tokenCookie", UserController.CheckIfTokenValid)
 router.get(
