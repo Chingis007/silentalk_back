@@ -3,6 +3,7 @@ const mongoose = require("mongoose")
 const argon2 = require("argon2")
 const User = require("../Models/User.model")
 const Chanell = require("../Models/Chanell.model")
+const Chat = require("../Models/Chat.model")
 const Service = require("../Models/Service.model")
 const generatePassword = require("secure-random-password")
 const { AUTH_TOKEN_KEY } = process.env
@@ -10,6 +11,21 @@ const jwt = require("jsonwebtoken")
 // import * as jose from "jose"
 
 module.exports = {
+  // findByFindname: async (req, res, next) => {
+  //   const findname = req.params.findname
+  //   const type = req.params.type
+  //   if(type == "chanell"){
+  //     }
+  //     if(type == "user"){
+  //       let user = await User.find({
+  //         findname: findname
+  //       })
+  //       let objToSend = {
+
+  //       }
+  //       return res.send(["Back is good",])
+  //   }
+  // },
   GlobalSearch: async (req, res, next) => {
     const toSearchValue = req.params.toSearchValue
     let finalArray = []
@@ -37,12 +53,25 @@ module.exports = {
       finalArray.push({
         photoLink: element.photoLink,
         findname: element.findname,
+        username: element.username,
+        subscribers: element.partisipants.length,
+        type: "chanell",
       })
     })
     user.forEach((element) => {
+      let phoneNumber = ""
+      if (element.publicNumber) {
+        phoneNumber = element.phoneNumber
+      } else {
+        phoneNumber = ""
+      }
       finalArray.push({
         photoLink: element.photoLink,
         findname: element.findname,
+        username: element.username,
+        phoneNumber: phoneNumber,
+        bio: element.bio,
+        type: "user",
       })
     })
     return res.send(finalArray)
@@ -130,6 +159,12 @@ module.exports = {
           chanellsList: user.chanellsList,
           findname: user.findname,
         }
+        // for (let index = 0; index < userList.chatsList.length; index++) {
+        //   const userFromChat = await User.findOne({
+        //     findname: userList.chatsList[index].userFindname,
+        //   })
+        //   userList.chatsList[index].lastOnline == userFromChat.lastOnline
+        // }
         let allChanells = []
         for (let i = 0; i < user.chanellsList.length; i++) {
           const chanell = await Chanell.findOne({
@@ -144,9 +179,21 @@ module.exports = {
             link: chanell.link,
             partisipants: chanell.partisipants,
             messages: chanell.messages,
-            pinned: chanell.pinned,
             photoLink: chanell.photoLink,
             lastUpdated: chanell.lastUpdated,
+          })
+        }
+        for (let i = 0; i < user.chatsList.length; i++) {
+          const chat = await Chat.findOne({
+            findname: user.chatsList[i].findname,
+          })
+
+          allChanells.push({
+            group: chat.group,
+            findname: chat.findname,
+            partisipants: chat.partisipants,
+            messages: chat.messages,
+            lastUpdated: chat.lastUpdated,
           })
         }
         for (let i = 0; i < user.servicesList.length; i++) {
@@ -165,8 +212,31 @@ module.exports = {
         allChanells.sort((a, b) => {
           return b.lastUpdated - a.lastUpdated
         })
-
-        return res.send(["Back is good", userList, allChanells])
+        let usersList = []
+        let onlineList = []
+        allChanells.forEach((chanell) => {
+          if (chanell.group !== "service") {
+            chanell.partisipants.forEach((partisipant) => {
+              if (partisipant.findname !== user.findname) {
+                // @ts-ignore
+                if (!usersList.includes(partisipant.findname)) {
+                  // @ts-ignore
+                  usersList.push(partisipant.findname)
+                }
+              }
+            })
+          }
+        })
+        for (let index = 0; index < usersList.length; index++) {
+          const user = await User.findOne({
+            findname: usersList[index],
+          })
+          onlineList.push({
+            findname: usersList[index],
+            online: user.lastOnline,
+          })
+        }
+        return res.send(["Back is good", userList, allChanells, onlineList])
       } catch (error) {
         if (error.message === "jwt expired") {
           return res.send("Token expired")
@@ -279,9 +349,9 @@ module.exports = {
   },
   findGoogleUserByNumberAndLoginIt: async (req, res, next) => {
     const phoneNumber = req.headers["myphonenumber"]
-    // const email = req.main_payload.email
+    const email = req.main_payload.email
     try {
-      const user = await User.findOne({ phoneNumber: phoneNumber })
+      const user = await User.findOne({ email: email })
       if (!user) {
         next()
       } else {
@@ -298,8 +368,6 @@ module.exports = {
         // userWithToken = { ...user, auth_token: auth_token }
         const objToSend = {
           findname: user._doc.findname,
-          email: user._doc.email,
-          emailImgUrl: user._doc.emailImgUrl,
           auth_token: auth_token,
         }
         res.send(["Email Exists and Logged Successfully", objToSend])
@@ -368,24 +436,53 @@ module.exports = {
       let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
       let randNumberToString = randNumber.toString()
       let randomNameNumber = await User.findOne({
-        username: randNumberToString,
+        $or: [
+          {
+            findname: randNumberToString,
+          },
+          {
+            username: randNumberToString,
+          },
+        ],
       })
       while (randomNameNumber) {
         randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
         randNumberToString = randNumber.toString()
         randomNameNumber = await User.findOne({
-          username: randNumberToString,
+          $or: [
+            {
+              findname: randNumberToString,
+            },
+            {
+              username: randNumberToString,
+            },
+          ],
         })
       }
       const username = randNumberToString
       const user = new User({
+        findname: username,
         username: username,
         password: newPassword,
         phoneNumber: phoneNumber,
-        servicesList: [
-          { findname: "silentalk", archived: "no", muted: "no", pinned: "no" },
-        ],
+        photoLink: "",
+        bio: "",
+        publicNumber: true,
+        lastOnline: "",
         email: email,
+        servicesList: [
+          {
+            findname: "silentalk",
+            archived: "no",
+            muted: "no",
+            pinned: "no",
+            lastSeenMsg: "0",
+          },
+        ],
+        groupList: [],
+        chatsList: [],
+        botsList: [],
+        chanellsList: [],
         // isVerified: true,
       })
       const result = await user.save()
@@ -453,13 +550,27 @@ module.exports = {
       let randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
       let randNumberToString = randNumber.toString()
       let randomNameNumber = await User.findOne({
-        username: randNumberToString,
+        $or: [
+          {
+            findname: randNumberToString,
+          },
+          {
+            username: randNumberToString,
+          },
+        ],
       })
       while (randomNameNumber) {
         randNumber = Math.floor(Math.random() * (maxm - minm + 1)) + minm
         randNumberToString = randNumber.toString()
         randomNameNumber = await User.findOne({
-          username: randNumberToString,
+          $or: [
+            {
+              findname: randNumberToString,
+            },
+            {
+              username: randNumberToString,
+            },
+          ],
         })
       }
       const username = randNumberToString
@@ -468,10 +579,24 @@ module.exports = {
         username: username,
         password: newPassword,
         phoneNumber: phoneNumber,
-        servicesList: [
-          { findname: "silentalk", archived: "no", muted: "no", pinned: "no" },
-        ],
+        photoLink: "",
+        bio: "",
+        publicNumber: true,
+        lastOnline: "",
         email: "",
+        servicesList: [
+          {
+            findname: "silentalk",
+            archived: "no",
+            muted: "no",
+            pinned: "no",
+            lastSeenMsg: "0",
+          },
+        ],
+        groupList: [],
+        chatsList: [],
+        botsList: [],
+        chanellsList: [],
         // isVerified: true,
       })
       const result = await user.save()
@@ -737,7 +862,6 @@ module.exports = {
         link: link,
         partisipants: partisipants,
         messages: messages,
-        pinned: pinned,
         photoLink: photoLink,
         lastUpdated: new Date().getTime().toString(),
       })
@@ -776,12 +900,12 @@ module.exports = {
     }
   },
   fetchChatByLink: async (req, res, next) => {
-    const chatLink = req.headers["chatlink"]
+    const chatFindname = req.headers["chatFindname"]
     const chatType = req.headers["chattype"]
     switch (chatType) {
       case "chanell":
         const oldChanell = await Chanell.findOne({
-          link: chatLink,
+          findname: chatFindname,
         })
         if (!oldChanell) {
           res.send(["No chanell matching this link"])
@@ -1041,7 +1165,7 @@ module.exports = {
   updateAUser: async (req, res, next) => {
     try {
       const auth_token = req.body.auth_token
-      const chatLink = req.body.chatLink
+      const chatFindname = req.body.chatFindname
       const chatType = req.body.chatType
 
       const decodedUserInfo = jwt.verify(auth_token, process.env.AUTH_TOKEN_KEY)
@@ -1058,12 +1182,12 @@ module.exports = {
       switch (chatType) {
         case "chanell":
           const chanell = await Chanell.findOne({
-            link: chatLink,
+            findname: chatFindname,
           })
           for (let i = 0; i < chanell.partisipants.length; i++) {
             if (chanell.partisipants[i].findname == user.findname) {
               res.send(["User is already subscribed"], userFindname, auth_token)
-              break
+              return
             }
           }
           let newUserChanellsList = [...user.chanellsList]
@@ -1080,6 +1204,7 @@ module.exports = {
           newChanellsPartisipantsList.push({
             findname: user.findname,
             admin: "no",
+            deleted: [],
           })
           chanell.partisipants = newChanellsPartisipantsList
           await chanell.save()

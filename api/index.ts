@@ -11,6 +11,7 @@ const { WebSocketServer } = require("ws")
 const jwt = require("jsonwebtoken")
 const User = require("../Models/User.model")
 const Chanell = require("../Models/Chanell.model")
+const Chat = require("../Models/Chat.model")
 
 const app = express()
 
@@ -178,6 +179,7 @@ async function verifyToken(token) {
 }
 wss.on("connection", async (connection, req) => {
   connection.on("error", onSocketPostError)
+  // ;(async function () {
   const auth_token = req.url.slice(1)
   // const cookies = req.headers.cookie
   // if (cookies) {
@@ -186,11 +188,80 @@ wss.on("connection", async (connection, req) => {
   //     let oneCookieArray = tokenCookieString[i].split("=")
   //     if (oneCookieArray[0].trim() == "auth_token") {
   //       const auth_token = oneCookieArray[1].trim()
-  const userObject = await verifyToken(auth_token)
-  connection.findname = userObject.findname
-  //     }
-  //   }
-  // }
+  try {
+    const userObject = await verifyToken(auth_token)
+    connection.findname = userObject.findname
+    // console.log(connection.findname)
+    const user = await User.findOne({
+      findname: connection.findname,
+    })
+    // console.log(user)
+    user.lastOnline = "online"
+    user.markModified("lastOnline")
+    await user.save()
+
+    // @ts-ignore
+    let allClientsToSendUpdate = []
+    for (let i = 0; i < user.chanellsList.length; i++) {
+      const chanell = await Chanell.findOne({
+        findname: user.chanellsList[i].findname,
+      })
+      chanell.partisipants.forEach((partisipant) => {
+        if (partisipant.findname !== connection.findname) {
+          // @ts-ignore
+          if (!allClientsToSendUpdate.includes(partisipant.findname)) {
+            // @ts-ignore
+            allClientsToSendUpdate.push(partisipant.findname)
+          }
+        }
+      })
+    }
+    for (let i = 0; i < user.chatsList.length; i++) {
+      const chat = await Chat.findOne({
+        findname: user.chatsList[i].findname,
+      })
+      chat.partisipants.forEach((partisipant) => {
+        if (partisipant.findname !== connection.findname) {
+          // @ts-ignore
+          if (!allClientsToSendUpdate.includes(partisipant.findname)) {
+            // @ts-ignore
+            allClientsToSendUpdate.push(partisipant.findname)
+          }
+        }
+      })
+    }
+    let msg = {
+      type: "online",
+      action: "online",
+      mainInfo: { findname: connection.findname, time: "online" },
+    }
+    wss.clients?.forEach((client, index) => {
+      // @ts-ignore
+      if (allClientsToSendUpdate.includes(client.findname)) {
+        // console.log(client.readyState)
+        if (client.readyState == true) {
+          client.send(JSON.stringify(msg))
+        }
+      }
+    })
+    // })().then(async () => {
+    //   console.log(connection.findname)
+    //   const user = await User.findOne({
+    //     findname: connection.findname,
+    //   })
+    //   console.log(user)
+    //   if (user) {
+    //     user.lastOnline = "online"
+    //     user.markModified("lastOnline")
+    //     await user.save()
+    //   }
+    // })
+    //     }
+    //   }
+    // }
+  } catch (error) {
+    console.log("fuck, error:", error)
+  }
   connection.on("message", async (msg) => {
     try {
       // msg = {
@@ -427,6 +498,117 @@ wss.on("connection", async (connection, req) => {
           chanell.markModified("partisipants")
           await chanell.save()
         }
+        if (msg.type == "chat") {
+          const user = await User.findOne({
+            findname: userFindname,
+          })
+          const chat = await Chat.findOne({
+            findname: msg.findname,
+          })
+          // @ts-ignore
+          let arrayOfDeletedMsgTimesAndIndexes = [...msg.mainInfo.arrayOfObj]
+          // @ts-ignore
+          let toDeleteArray = []
+          // @ts-ignore
+          let toDeleteArrayIndexes = []
+          for (let i = 0; i < arrayOfDeletedMsgTimesAndIndexes.length; i++) {
+            // @ts-ignore
+            toDeleteArray.push(arrayOfDeletedMsgTimesAndIndexes[i].time)
+            // @ts-ignore
+            toDeleteArrayIndexes.push(arrayOfDeletedMsgTimesAndIndexes[i].index)
+          }
+          for (let i = 0; i < chat.partisipants.length; i++) {
+            if (chat.partisipants[i].findname == userFindname) {
+              if (chat.partisipants[i].admin != "yes") {
+                return
+              } else {
+                break
+              }
+            }
+          }
+          // chat.lastUpdated = new Date().getTime().toString()
+          // ЯКЩО ВИДАЛЕНО ОСТАННЄ ТО ЧАС МАЄ СТАТИ
+          // ЯК ОСТАННЄ НЕ ДЕЛІТНУТЕ ПОВІДОМЛЕННЯ
+          // @ts-ignore
+          let arrayOfIndexes = []
+          let quantity = 0
+          let maxQuantity = toDeleteArray.length
+          for (let j = 0; j < chat.messages.length; ) {
+            if (quantity == maxQuantity) {
+              break
+            }
+            for (let u = 0; u < toDeleteArray.length; u++) {
+              if (chat.messages[j].time == toDeleteArray[u]) {
+                // @ts-ignore
+                arrayOfIndexes.push(j)
+                quantity++
+              }
+            }
+            j++
+          }
+          let oldchatMessages = [...chat.messages]
+          for (let k = arrayOfIndexes.length - 1; k >= 0; k--) {
+            oldchatMessages.splice(arrayOfIndexes[k], 1)
+          }
+          chat.messages = oldchatMessages
+          chat.markModified("messages")
+          await chat.save()
+          const allPartisipants = chat.partisipants
+          let allClientsToSendUpdate = []
+          for (let i = 0; i < allPartisipants.length; i++) {
+            // @ts-ignore
+            if (allPartisipants[i].findname == userFindname) {
+              continue
+            }
+            // @ts-ignore
+            allClientsToSendUpdate.push(allPartisipants[i].findname)
+          } // @ts-ignore
+          let listOfClients = []
+          // @ts-ignore
+          let listOfActivePartisipants = []
+          // @ts-ignore
+          let listOfNotActivePartisipants = []
+          // @ts-ignore
+          wss.clients?.forEach((client, index) => {
+            // @ts-ignore
+            if (allClientsToSendUpdate.includes(client.findname)) {
+              // console.log(client.readyState)
+              if (client.readyState == true) {
+                // @ts-ignore
+                listOfActivePartisipants.push(client.findname)
+                client.send(JSON.stringify(msg))
+              } else {
+                // @ts-ignore
+                listOfNotActivePartisipants.push(client.findname)
+              }
+            }
+            // else {
+            //   if (client.findname != userFindname) {
+            //     console.log("client.findname", client.findname)
+            //     listOfClients.push(client.findname)
+            //   }
+            // }
+          })
+          for (let i = 0; i < allClientsToSendUpdate.length; i++) {
+            if (!listOfActivePartisipants.includes(allClientsToSendUpdate[i])) {
+              listOfNotActivePartisipants.push(allClientsToSendUpdate[i])
+            }
+          }
+          let oldchatPartisipants = [...chat.partisipants]
+          for (let i = 0; i < oldchatPartisipants.length; i++) {
+            if (
+              listOfNotActivePartisipants.includes(
+                // @ts-ignore
+                oldchatPartisipants[i].findname
+              )
+            ) {
+              oldchatPartisipants[i].deleted.push(...toDeleteArray)
+            }
+          }
+          chat.partisipants = oldchatPartisipants
+          chat.markModified("partisipants")
+          await chat.save()
+        }
       }
       if (msg.action == "edit") {
         if (msg.type == "chanell") {
@@ -457,6 +639,148 @@ wss.on("connection", async (connection, req) => {
           await chanell.save()
 
           const allPartisipants = chanell.partisipants
+          let allClientsToSendUpdate = []
+          for (let i = 0; i < allPartisipants.length; i++) {
+            // @ts-ignore
+            if (allPartisipants[i].findname == userFindname) {
+              continue
+            }
+            // @ts-ignore
+            allClientsToSendUpdate.push(allPartisipants[i].findname)
+          }
+          wss.clients?.forEach((client, index) => {
+            // @ts-ignore
+            if (allClientsToSendUpdate.includes(client.findname)) {
+              // console.log(client.readyState)
+              if (client.readyState == true) {
+                client.send(JSON.stringify(msg))
+              }
+            }
+          })
+        }
+        if (msg.type == "chat") {
+          const user = await User.findOne({
+            findname: userFindname,
+          })
+          const chat = await Chat.findOne({
+            findname: msg.findname,
+          })
+
+          for (let i = 0; i < chat.partisipants.length; i++) {
+            if (chat.partisipants[i].findname == userFindname) {
+              if (chat.partisipants[i].admin != "yes") {
+                return
+              }
+            }
+          }
+          for (let i = 0; i < chat.messages.length; i++) {
+            if (
+              String(chat.messages[i].time) ==
+              String(msg.mainInfo.msgObjToEdit.time)
+            ) {
+              chat.messages[i].comentary =
+                msg.mainInfo.msgObjToEdit.currentEditTextInput
+            }
+          }
+          chat.markModified("messages")
+          await chat.save()
+
+          const allPartisipants = chat.partisipants
+          let allClientsToSendUpdate = []
+          for (let i = 0; i < allPartisipants.length; i++) {
+            // @ts-ignore
+            if (allPartisipants[i].findname == userFindname) {
+              continue
+            }
+            // @ts-ignore
+            allClientsToSendUpdate.push(allPartisipants[i].findname)
+          }
+          wss.clients?.forEach((client, index) => {
+            // @ts-ignore
+            if (allClientsToSendUpdate.includes(client.findname)) {
+              // console.log(client.readyState)
+              if (client.readyState == true) {
+                client.send(JSON.stringify(msg))
+              }
+            }
+          })
+        }
+      }
+      if (msg.action == "pin") {
+        if (msg.type == "chanell") {
+          const user = await User.findOne({
+            findname: userFindname,
+          })
+          const chanell = await Chanell.findOne({
+            findname: msg.findname,
+          })
+
+          for (let i = 0; i < chanell.partisipants.length; i++) {
+            if (chanell.partisipants[i].findname == userFindname) {
+              if (chanell.partisipants[i].admin != "yes") {
+                return
+              }
+            }
+          }
+          for (let i = 0; i < chanell.messages.length; i++) {
+            if (
+              String(chanell.messages[i].time) ==
+              String(msg.mainInfo.msgObjToPin.time)
+            ) {
+              chanell.messages[i].pinned = !chanell.messages[i].pinned
+            }
+          }
+
+          chanell.markModified("messages")
+          await chanell.save()
+
+          const allPartisipants = chanell.partisipants
+          let allClientsToSendUpdate = []
+          for (let i = 0; i < allPartisipants.length; i++) {
+            // @ts-ignore
+            if (allPartisipants[i].findname == userFindname) {
+              continue
+            }
+            // @ts-ignore
+            allClientsToSendUpdate.push(allPartisipants[i].findname)
+          }
+          wss.clients?.forEach((client, index) => {
+            // @ts-ignore
+            if (allClientsToSendUpdate.includes(client.findname)) {
+              // console.log(client.readyState)
+              if (client.readyState == true) {
+                client.send(JSON.stringify(msg))
+              }
+            }
+          })
+        }
+        if (msg.type == "chat") {
+          const user = await User.findOne({
+            findname: userFindname,
+          })
+          const chat = await Chat.findOne({
+            findname: msg.findname,
+          })
+
+          for (let i = 0; i < chat.partisipants.length; i++) {
+            if (chat.partisipants[i].findname == userFindname) {
+              if (chat.partisipants[i].admin != "yes") {
+                return
+              }
+            }
+          }
+          for (let i = 0; i < chat.messages.length; i++) {
+            if (
+              String(chat.messages[i].time) ==
+              String(msg.mainInfo.msgObjToPin.time)
+            ) {
+              chat.messages[i].pinned = !chat.messages[i].pinned
+            }
+          }
+          chat.markModified("messages")
+          await chat.save()
+
+          const allPartisipants = chat.partisipants
           let allClientsToSendUpdate = []
           for (let i = 0; i < allPartisipants.length; i++) {
             // @ts-ignore
@@ -671,6 +995,172 @@ wss.on("connection", async (connection, req) => {
             }
           })
         }
+        if (msg.type == "chat") {
+          const user = await User.findOne({
+            findname: userFindname,
+          })
+          const chat = await Chat.findOne({
+            findname: msg.findname,
+          })
+          // for (let i = 0; i < chanell.partisipants.length; i++) {
+          //   if (chanell.partisipants[i].findname == userFindname) {
+          //     if (chanell.partisipants[i].admin != "yes") {
+          //       return
+          //     }
+          //   }
+          // }
+          // @ts-ignore
+          let countWay
+          for (let i = 0; i < chat.messages.length; i++) {
+            if (String(chat.messages[i].time) == String(msg.mainInfo.time)) {
+              if (!msg.mainInfo.newEmotionArray.prevEmo.length) {
+                chat.messages[i].emotions.push({
+                  name: msg.mainInfo.newEmotionArray.newEmo[0].name,
+                  smile: msg.mainInfo.newEmotionArray.newEmo[0].smile,
+                  users: [userFindname],
+                  count: 1,
+                })
+              } else {
+                if (!msg.mainInfo.newEmotionArray.newEmo.length) {
+                  chat.messages[i].emotions = []
+                } else {
+                  if (
+                    msg.mainInfo.newEmotionArray.prevEmo.length <
+                    msg.mainInfo.newEmotionArray.newEmo.length
+                  ) {
+                    chat.messages[i].emotions.push({
+                      name: msg.mainInfo.emotion.name,
+                      smile: msg.mainInfo.emotion.smile,
+                      users: [userFindname],
+                      count: 1,
+                    })
+                    break
+                  } else {
+                    if (
+                      msg.mainInfo.newEmotionArray.prevEmo.length >
+                      msg.mainInfo.newEmotionArray.newEmo.length
+                    ) {
+                      for (
+                        let index = 0;
+                        index < chat.messages[i].emotions.length;
+                        index++
+                      ) {
+                        if (
+                          chat.messages[i].emotions[index].name ==
+                          msg.mainInfo.emotion.name
+                        ) {
+                          chat.messages[i].emotions.splice(index, 1)
+                          break
+                        }
+                      }
+                    } else {
+                      if (
+                        msg.mainInfo.newEmotionArray.prevEmo.length ==
+                        msg.mainInfo.newEmotionArray.newEmo.length
+                      ) {
+                        for (
+                          let index = 0;
+                          index < chat.messages[i].emotions.length;
+                          index++
+                        ) {
+                          if (
+                            chat.messages[i].emotions[index].name ==
+                            msg.mainInfo.emotion.name
+                          ) {
+                            for (
+                              let aaaa = 0;
+                              aaaa <
+                              msg.mainInfo.newEmotionArray.prevEmo.length;
+                              aaaa++
+                            ) {
+                              if (
+                                msg.mainInfo.newEmotionArray.prevEmo[aaaa]
+                                  .name == msg.mainInfo.emotion.name
+                              ) {
+                                for (
+                                  let dddd = 0;
+                                  dddd <
+                                  msg.mainInfo.newEmotionArray.newEmo.length;
+                                  dddd++
+                                ) {
+                                  if (
+                                    msg.mainInfo.newEmotionArray.newEmo[dddd]
+                                      .name == msg.mainInfo.emotion.name
+                                  ) {
+                                    if (
+                                      Number(
+                                        msg.mainInfo.newEmotionArray.prevEmo[
+                                          aaaa
+                                        ].count
+                                      ) <
+                                      Number(
+                                        msg.mainInfo.newEmotionArray.newEmo[
+                                          dddd
+                                        ].count
+                                      )
+                                    ) {
+                                      countWay = "increase"
+                                    } else {
+                                      countWay = "decrease"
+                                    }
+                                    break
+                                  }
+                                }
+                                break
+                              }
+                            }
+                            if (countWay == "decrease") {
+                              chat.messages[i].emotions[index].count--
+                              let k =
+                                chat.messages[i].emotions[index].users.indexOf(
+                                  userFindname
+                                )
+                              if (k !== -1) {
+                                chat.messages[i].emotions[index].users.splice(
+                                  k,
+                                  1
+                                )
+                              }
+                            } else {
+                              chat.messages[i].emotions[index].count++
+                              chat.messages[i].emotions[index].users.push(
+                                userFindname
+                              )
+                            }
+                            break
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              break
+            }
+          }
+          chat.markModified("messages")
+          await chat.save()
+
+          const allPartisipants = chat.partisipants
+          let allClientsToSendUpdate = []
+          for (let i = 0; i < allPartisipants.length; i++) {
+            // @ts-ignore
+            if (allPartisipants[i].findname == userFindname) {
+              continue
+            }
+            // @ts-ignore
+            allClientsToSendUpdate.push(allPartisipants[i].findname)
+          }
+          wss.clients?.forEach((client, index) => {
+            // @ts-ignore
+            if (allClientsToSendUpdate.includes(client.findname)) {
+              // console.log(client.readyState)
+              if (client.readyState == true) {
+                client.send(JSON.stringify(msg))
+              }
+            }
+          })
+        }
       }
       if (msg.action == "add") {
         if (msg.type == "chanell") {
@@ -692,6 +1182,124 @@ wss.on("connection", async (connection, req) => {
           await chanell.save()
 
           const allPartisipants = chanell.partisipants
+          let allClientsToSendUpdate = []
+          for (let i = 0; i < allPartisipants.length; i++) {
+            // @ts-ignore
+            if (allPartisipants[i].findname == userFindname) {
+              continue
+            }
+            // @ts-ignore
+            allClientsToSendUpdate.push(allPartisipants[i].findname)
+          }
+          // console.log(allClientsToSendUpdate)
+          wss.clients?.forEach((client, index) => {
+            // @ts-ignore
+            if (allClientsToSendUpdate.includes(client.findname)) {
+              // console.log(client.readyState)
+              if (client.readyState == true) {
+                client.send(JSON.stringify(msg))
+              }
+            }
+          })
+        }
+        if (msg.type == "chat") {
+          // const user = await User.findOne({
+          //   findname: userFindname,
+          // })
+          const chat = await Chat.findOne({
+            findname: msg.findname,
+          })
+          for (let i = 0; i < chat.partisipants.length; i++) {
+            if (chat.partisipants[i].findname == userFindname) {
+              if (chat.partisipants[i].admin != "yes") {
+                return
+              }
+            }
+          }
+          chat.lastUpdated = new Date().getTime().toString()
+          chat.messages.push(msg.mainInfo)
+          await chat.save()
+
+          const allPartisipants = chat.partisipants
+          let allClientsToSendUpdate = []
+          for (let i = 0; i < allPartisipants.length; i++) {
+            // @ts-ignore
+            if (allPartisipants[i].findname == userFindname) {
+              continue
+            }
+            // @ts-ignore
+            allClientsToSendUpdate.push(allPartisipants[i].findname)
+          }
+          // console.log(allClientsToSendUpdate)
+          wss.clients?.forEach((client, index) => {
+            // @ts-ignore
+            if (allClientsToSendUpdate.includes(client.findname)) {
+              // console.log(client.readyState)
+              if (client.readyState == true) {
+                client.send(JSON.stringify(msg))
+              }
+            }
+          })
+        }
+      }
+      if (msg.action == "addNew") {
+        if (msg.type == "chat") {
+          const userSend = await User.findOne({
+            findname: userFindname,
+          })
+          const userRecieve = await User.findOne({
+            findname: msg.reciever,
+          })
+          const chat = new Chat({
+            group: "chat",
+            findname: `${userFindname}${msg.reciever}`,
+            partisipants: [
+              {
+                admin: "yes",
+                findname: userFindname,
+                deleted: [],
+              },
+              {
+                admin: "yes",
+                findname: msg.reciever,
+                deleted: [],
+              },
+            ],
+            messages: [msg.mainInfo],
+            lastUpdated: new Date().getTime().toString(),
+          })
+          await chat.save()
+          let newUserChatsList1 = [...userSend.chatsList]
+          newUserChatsList1.push({
+            photoLink: userRecieve.photoLink,
+            userFindname: msg.reciever,
+            username: msg.reciever,
+            findname: `${userFindname}${msg.reciever}`,
+            archived: "no",
+            muted: "no",
+            pinned: "no",
+            lastSeenMsg: "1",
+          })
+          userSend.chatsList = newUserChatsList1
+          await userSend.save()
+          let newUserChatsList2 = [...userRecieve.chatsList]
+          newUserChatsList2.push({
+            photoLink: userSend.photoLink,
+            userFindname: userFindname,
+            username: userFindname,
+            findname: `${userFindname}${msg.reciever}`,
+            archived: "no",
+            muted: "no",
+            pinned: "no",
+            lastSeenMsg: "0",
+          })
+          msg.photoLink = userSend.photoLink
+          msg.username = userSend.username
+          msg.userFindname = userSend.findname
+          userRecieve.chatsList = newUserChatsList2
+          await userRecieve.save()
+
+          const allPartisipants = chat.partisipants
           let allClientsToSendUpdate = []
           for (let i = 0; i < allPartisipants.length; i++) {
             // @ts-ignore
@@ -743,6 +1351,35 @@ wss.on("connection", async (connection, req) => {
             }
           }
         }
+        if (msg.type == "chat") {
+          const user = await User.findOne({
+            findname: userFindname,
+          })
+          if (!user) {
+            return
+          }
+          for (let i = 0; i < user.chatsList.length; i++) {
+            if (user.chatsList[i].findname == msg.findname) {
+              user.chatsList[i].lastSeenMsg = msg.lastSeenMsg
+              // let badas = [...user.chanellsList]
+              // badas[i].lastSeenMsg = msg.lastSeenMsg
+              // user.chanellsList = badas
+
+              // await user.chanellsList.updateOne(
+              //   { findname: userFindname },
+              //   {
+              //     $set: {
+              //       chanellsList: badas,
+              //     },
+              //   },
+              //   { session: null }
+              // )
+              user.markModified("chatsList")
+              await user.save()
+              break
+            }
+          }
+        }
       }
     } catch {
       ;(error) => {
@@ -752,7 +1389,72 @@ wss.on("connection", async (connection, req) => {
     }
   })
 
-  connection.on("close", () => {
+  connection.on("close", async () => {
     // console.log("Connection closed")
+
+    try {
+      const user = await User.findOne({
+        findname: connection.findname,
+      })
+      user.lastOnline = new Date().getTime().toString()
+      user.markModified("lastOnline")
+      await user.save()
+      // @ts-ignore
+      let allClientsToSendUpdate = []
+      for (let i = 0; i < user.chanellsList.length; i++) {
+        const chanell = await Chanell.findOne({
+          findname: user.chanellsList[i].findname,
+        })
+        chanell.partisipants.forEach((partisipant) => {
+          if (partisipant.findname !== connection.findname) {
+            // @ts-ignore
+            if (!allClientsToSendUpdate.includes(partisipant.findname)) {
+              // @ts-ignore
+              allClientsToSendUpdate.push(partisipant.findname)
+            }
+          }
+        })
+      }
+      for (let i = 0; i < user.chatsList.length; i++) {
+        const chat = await Chat.findOne({
+          findname: user.chatsList[i].findname,
+        })
+        chat.partisipants.forEach((partisipant) => {
+          if (partisipant.findname !== connection.findname) {
+            // @ts-ignore
+            if (!allClientsToSendUpdate.includes(partisipant.findname)) {
+              // @ts-ignore
+              allClientsToSendUpdate.push(partisipant.findname)
+            }
+          }
+        })
+      }
+      let msg = {
+        type: "online",
+        action: "online",
+        mainInfo: {
+          findname: connection.findname,
+          time: new Date().getTime().toString(),
+        },
+      }
+      wss.clients?.forEach((client, index) => {
+        // @ts-ignore
+        if (allClientsToSendUpdate.includes(client.findname)) {
+          // console.log(client.readyState)
+          if (client.readyState == true) {
+            client.send(JSON.stringify(msg))
+          }
+        }
+      })
+    } catch (error) {}
+    // console.log(connection.findname)
+    // const user = await User.findOne({
+    //   findname: connection.findname,
+    // })
+    // if (user) {
+    //   user.lastOnline = new Date().getTime().toString()
+    //   user.markModified("lastOnline")
+    //   await user.save()
+    // }
   })
 })

@@ -42,6 +42,22 @@ const UserSchema = new Schema({
     type: [],
     required: true,
   },
+  photoLink: {
+    type: String,
+    required: true,
+  },
+  bio: {
+    type: String,
+    required: true,
+  },
+  publicNumber: {
+    type: Boolean,
+    required: true,
+  },
+  lastOnline: {
+    type: String,
+    required: true,
+  },
   // googleId: {
   //   type: String,
   // },
