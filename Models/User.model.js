@@ -44,11 +44,11 @@ const UserSchema = new Schema({
   },
   photoLink: {
     type: String,
-    required: true,
+    required: false,
   },
   bio: {
     type: String,
-    required: true,
+    required: false,
   },
   publicNumber: {
     type: Boolean,

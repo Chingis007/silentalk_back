@@ -353,7 +353,15 @@ module.exports = {
     try {
       const user = await User.findOne({ email: email })
       if (!user) {
-        next()
+        const user = await User.findOne({ phoneNumber: phoneNumber })
+        if (!user) {
+          next()
+        } else {
+          res.send([
+            "User Exists but given email is not attached to given account",
+          ])
+          return
+        }
       } else {
         //User exist, login it
         const jwtOptions = {
@@ -419,8 +427,20 @@ module.exports = {
     // } else {
     // create
     try {
+      const pictureUrl = req.main_payload.picture
       const email = req.main_payload.email
       const phoneNumber = req.headers["myphonenumber"]
+      const userExist = await User.findOne({ email: email })
+      if (!userExist) {
+        const userExist = await User.findOne({ phoneNumber: phoneNumber })
+        if (userExist) {
+          res.send(["Error on google create"])
+          return
+        }
+      } else {
+        res.send(["Error on google create"])
+        return
+      }
       const newPassword = await argon2.hash(
         generatePassword.randomPassword({
           length: 10,
@@ -465,10 +485,10 @@ module.exports = {
         username: username,
         password: newPassword,
         phoneNumber: phoneNumber,
-        photoLink: "",
+        photoLink: pictureUrl,
         bio: "",
         publicNumber: true,
-        lastOnline: "",
+        lastOnline: new Date().getTime().toString(),
         email: email,
         servicesList: [
           {
